@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Stores user login info and connects their financial data
+model User {
+  id             String   @id @default(uuid())
+  clerkUserId    String   @unique
+  email          String   @unique
+  firstName      String?
+  lastName       String?
+
+  accounts       Account[] //user can have many accounts
+  categories     Category[] //user can have many categories
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+}
+// Transaction Table
+model Transaction {
+  id        String   @id @default(uuid())
+  type      TransactionType
+  amount    Decimal  @db.Decimal(12, 2)
+  date      DateTime
+  notes     String?
+
+  account   Account  @relation(fields: [accountId], references: [id])
+  accountId String // Foreign key
+
+  category  Category  @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Bank Account
+model Account {
+  id           String        @id @default(uuid())
+  name         String
+  type         AccountType
+  balance      Decimal       @db.Decimal(12, 2)
+  transactions Transaction[]
+
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Stores default and user-created categories used to organize transactions
+model Category {
+  id           String         @id @default(uuid())
+  name         String
+  type         TransactionType
+
+  transactions  Transaction[]
+
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum AccountType {
+  CHEQUING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  CASH
+}
+
+// Defines whether money is coming in, going out, or moving between accounts
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
