@@ -3,6 +3,7 @@ import ProtectedLayout from './components/ProtectedLayout'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import ComingSoon from './pages/ComingSoon'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 
@@ -19,6 +20,11 @@ function App() {
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/accounts" element={<ComingSoon title="Accounts" />} />
+        <Route path="/transactions" element={<ComingSoon title="Transactions" />} />
+        <Route path="/budgets" element={<ComingSoon title="Budgets" />} />
+        <Route path="/debts" element={<ComingSoon title="Debts & Loans" />} />
+        <Route path="/settings" element={<ComingSoon title="Settings" />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

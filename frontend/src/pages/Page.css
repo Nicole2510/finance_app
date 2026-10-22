@@ -1,0 +1,11 @@
+/* Shared page heading styles */
+.page__title {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 400;
+}
+
+.page__subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+}
