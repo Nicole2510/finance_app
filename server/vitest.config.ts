@@ -11,5 +11,8 @@ if (!testEnv.DATABASE_URL?.includes("luma_test")) {
 export default defineConfig({
   test: {
     env: testEnv,
+    setupFiles: ["src/test/setup.ts"],
+    // Test files share one database, so run them one at a time
+    fileParallelism: false,
   },
 });

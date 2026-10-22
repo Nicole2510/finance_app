@@ -1,5 +1,7 @@
 import express, { type ErrorRequestHandler } from "express";
 import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
+import { meRouter } from "./routes/me.js";
 
 // Creates express app (kept separate from app.listen so tests can use it)
 export const app = express();
@@ -10,10 +12,15 @@ app.use(cors({ origin: "http://localhost:5173" }));
 // Parse JSON request bodies into req.body
 app.use(express.json());
 
+// Reads the Clerk session token (if any) so getAuth(req) works in routes
+app.use(clerkMiddleware());
+
 // Quick check that the server is up
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/api/me", meRouter);
 
 // Catch any error thrown in a route and send a safe response
 // (must be registered after all routes)

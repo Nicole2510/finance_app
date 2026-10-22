@@ -1,0 +1,88 @@
+/*
+  Our styles for Clerk's sign-in / sign-up forms.
+  Clerk's own styles live in a lower-priority CSS layer (cssLayerName in
+  ClerkWithRouter), so these plain rules always win.
+*/
+
+.nayad-clerk {
+  width: 100%;
+  max-width: 400px;
+}
+
+.nayad-clerk__hidden {
+  display: none;
+}
+
+/* On the first step our page heading is enough, so hide Clerk's.
+   Later steps (e.g. "Check your email") keep theirs for context. */
+.cl-signIn-start .cl-header,
+.cl-signUp-start .cl-header {
+  display: none;
+}
+
+.nayad-clerk__title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--espresso);
+}
+
+.nayad-clerk__subtitle {
+  color: var(--text-muted);
+}
+
+.nayad-clerk__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--espresso);
+}
+
+.nayad-clerk__input {
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--cream);
+  font-size: 15px;
+  color: var(--espresso);
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nayad-clerk__input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 4px rgba(230, 184, 178, 0.35);
+  outline: none;
+}
+
+/* Reuses .auth__button; just fit it to Clerk's form width */
+.nayad-clerk__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: none;
+  font-size: 15px;
+  text-transform: none;
+}
+
+.nayad-clerk__divider-text {
+  color: var(--text-muted);
+}
+
+.nayad-clerk__link {
+  font-weight: 500;
+  color: var(--espresso);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nayad-clerk__link:hover {
+  color: var(--rose);
+}
+
+/* Keep the required "Secured by Clerk" footer, but make it quiet */
+.nayad-clerk__footer {
+  background: transparent;
+  font-size: 13px;
+  opacity: 0.75;
+}

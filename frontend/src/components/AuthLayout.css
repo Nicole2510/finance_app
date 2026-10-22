@@ -1,0 +1,127 @@
+/* Page background with soft warm blobs, card centred on top */
+.auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(230, 184, 178, 0.45), transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(232, 223, 216, 0.9), transparent 45%),
+    var(--cream);
+}
+
+/* White card holding the brand panel and the form */
+.auth__card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 100%;
+  max-width: 1080px;
+  min-height: 640px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.auth__brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 40px;
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 80% 85%, rgba(230, 184, 178, 0.35), transparent 50%),
+    linear-gradient(160deg, #75645a 0%, var(--espresso) 100%);
+  color: var(--cream);
+}
+
+.auth__logo {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 5vw, 60px);
+  font-weight: 400;
+}
+
+.auth__tagline {
+  margin-top: 8px;
+  opacity: 0.85;
+}
+
+.auth__footer {
+  font-size: 18px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.auth__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 8px;
+}
+
+.auth__heading {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 400;
+}
+
+.auth__subtext {
+  margin-bottom: 16px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.auth__button {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  padding: 14px;
+  border: 1px solid var(--espresso);
+  border-radius: 999px;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--espresso);
+  background: var(--surface);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth__button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px rgba(47, 39, 36, 0.5);
+}
+
+.auth__button--primary {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+/* Tablet and phone: brand panel becomes a short banner above the form */
+@media (max-width: 860px) {
+  .auth {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .auth__card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .auth__brand {
+    padding: 28px 24px;
+  }
+
+  .auth__footer {
+    display: none;
+  }
+
+  .auth__panel {
+    padding: 8px 0 24px;
+  }
+}

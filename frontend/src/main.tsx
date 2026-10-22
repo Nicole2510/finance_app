@@ -1,13 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ClerkProvider } from '@clerk/react'
+import { BrowserRouter } from 'react-router'
+import ClerkWithRouter from './components/ClerkWithRouter.tsx'
 import App from './App.tsx'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider>
-      <App />
-    </ClerkProvider>
+    <BrowserRouter>
+      <ClerkWithRouter>
+        <App />
+      </ClerkWithRouter>
+    </BrowserRouter>
   </StrictMode>,
 )
