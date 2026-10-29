@@ -1,7 +1,7 @@
 import { Navigate, NavLink, Outlet } from 'react-router'
 import { useAuth } from '@clerk/react'
 import UserMenu from './UserMenu'
-import { mainNav, settingsNav } from './navItems'
+import { mainNav, secondaryNav } from './navItems'
 import './ProtectedLayout.css'
 
 // Wraps every page that needs a signed-in user.
@@ -12,8 +12,6 @@ function ProtectedLayout() {
 
   if (!isLoaded) return <p>Loading...</p>
   if (!isSignedIn) return <Navigate to="/" replace />
-
-  const SettingsIcon = settingsNav.icon
 
   return (
     <div className="app">
@@ -30,10 +28,12 @@ function ProtectedLayout() {
         </nav>
 
         <div className="sidebar__bottom">
-          <NavLink to={settingsNav.to} className="sidebar__link">
-            <SettingsIcon size={20} strokeWidth={1.75} aria-hidden />
-            {settingsNav.label}
-          </NavLink>
+          {secondaryNav.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} className="sidebar__link">
+              <Icon size={20} strokeWidth={1.75} aria-hidden />
+              {label}
+            </NavLink>
+          ))}
           <UserMenu variant="sidebar" />
         </div>
       </aside>

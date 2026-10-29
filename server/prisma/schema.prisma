@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -22,7 +20,9 @@ model User {
 
   accounts       Account[] //user can have many accounts
   categories     Category[] //user can have many categories
-  
+  incomeSources  IncomeSource[] //user can have many income sources
+  transactions   Transaction[] //user can have many transactions
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -31,48 +31,90 @@ model User {
 model Transaction {
   id        String   @id @default(uuid())
   type      TransactionType
-  amount    Decimal  @db.Decimal(12, 2)
-  date      DateTime
+  amount    Decimal  @db.Decimal(12, 2) // always positive; type gives the direction
+  date      DateTime @db.Date // calendar date only, no time/timezone
   notes     String?
 
-  account   Account  @relation(fields: [accountId], references: [id])
+  // Owner of the transaction; deleting the user deletes their transactions
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  // NoAction: you can't delete an account/category that still has
+  // transactions (we archive those instead)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: NoAction)
   accountId String // Foreign key
 
-  category  Category  @relation(fields: [categoryId], references: [id])
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction)
   categoryId String
+
+  // Who paid you (only for INCOME transactions, optional)
+  incomeSource   IncomeSource? @relation(fields: [incomeSourceId], references: [id], onDelete: NoAction)
+  incomeSourceId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([incomeSourceId])
 }
 
 // Bank Account
 model Account {
-  id           String        @id @default(uuid())
-  name         String
-  type         AccountType
-  balance      Decimal       @db.Decimal(12, 2)
-  transactions Transaction[]
+  id             String        @id @default(uuid())
+  name           String
+  type           AccountType
+  // Balance when added to the app; the current balance is calculated
+  // from transactions so it can never drift
+  openingBalance Decimal       @default(0) @db.Decimal(12, 2)
+  archivedAt     DateTime?
+  transactions   Transaction[]
 
-  user         User          @relation(fields: [userId], references: [id])
-  userId       String
-  
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // Stores default and user-created categories used to organize transactions
 model Category {
   id           String         @id @default(uuid())
   name         String
-  type         TransactionType
+  emoji        String? // optional, stored separately from the name
+  group        CategoryGroup
+  archivedAt   DateTime? // archived categories are hidden but keep their history
 
   transactions  Transaction[]
 
-  user         User          @relation(fields: [userId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@unique([userId, name]) // no duplicate category names per user
+}
+
+// Who pays the user (e.g. each employer), separate from the income category
+model IncomeSource {
+  id           String        @id @default(uuid())
+  name         String
+  emoji        String?
+  archivedAt   DateTime?
+
+  transactions Transaction[]
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name])
 }
 
 enum AccountType {
@@ -90,3 +132,10 @@ enum TransactionType {
   TRANSFER
 }
 
+// Budget group for a category (50/30/20 rule); income is its own group
+enum CategoryGroup {
+  NEEDS
+  WANTS
+  SAVINGS_DEBT
+  INCOME
+}

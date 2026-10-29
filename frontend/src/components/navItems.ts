@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   PieChart,
   Settings,
+  Tags,
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
@@ -19,4 +20,8 @@ export const mainNav: NavItem[] = [
   { to: '/debts', label: 'Debts & Loans', icon: HandCoins },
 ]
 
-export const settingsNav: NavItem = { to: '/settings', label: 'Settings', icon: Settings }
+// Shown in the sidebar's bottom section (on phones, via the user menu)
+export const secondaryNav: NavItem[] = [
+  { to: '/categories', label: 'Categories', icon: Tags },
+  { to: '/settings', label: 'Settings', icon: Settings },
+]

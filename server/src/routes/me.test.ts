@@ -2,14 +2,10 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../app.js";
 import { prisma } from "../db.js";
+import { resetDb } from "../test/helpers.js";
 
 // Start each test with an empty luma_test database
-beforeEach(async () => {
-  await prisma.transaction.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.user.deleteMany();
-});
+beforeEach(resetDb);
 
 afterAll(async () => {
   await prisma.$disconnect();

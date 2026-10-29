@@ -1,0 +1,178 @@
+.modal {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  color: var(--espresso);
+}
+
+.modal[open] {
+  animation: modal-pop 0.18s ease-out;
+}
+
+.modal::backdrop {
+  background: rgba(47, 39, 36, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+/* Scrolls inside itself if taller than the screen */
+.modal__body {
+  position: relative;
+  max-height: calc(100dvh - 32px);
+  padding: 28px;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  background: #fbf8f5;
+  box-shadow: var(--shadow-soft);
+}
+
+.modal--dialog {
+  width: min(460px, calc(100vw - 32px));
+}
+
+.modal--wide {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.modal__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--taupe);
+  cursor: pointer;
+}
+
+.modal__close:hover {
+  background: var(--cream);
+  color: var(--espresso);
+}
+
+/* Keyboard focus ring in our palette instead of the browser's blue */
+.modal__close:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+}
+
+.modal__title {
+  padding-right: 40px;
+  margin-bottom: 20px;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+}
+
+/* Phones: a bit less padding so content has room */
+@media (max-width: 640px) {
+  .modal__body {
+    padding: 24px 18px;
+    border-radius: var(--radius-md);
+  }
+
+  .modal__close {
+    top: 16px;
+    right: 14px;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  /* Primary action on top when buttons stack */
+  .modal-actions .btn:last-child {
+    order: -1;
+  }
+}
+
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Shared form + button styles used inside modals */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.form-field__label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-input {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  font: inherit;
+  color: var(--espresso);
+}
+
+.form-input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 4px rgba(230, 184, 178, 0.35);
+  outline: none;
+}
+
+.form-error {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #f7e3e0;
+  font-size: 14px;
+  color: #8a3a31;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn {
+  padding: 14px 18px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn--primary {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.btn--secondary {
+  background: #efe8e2;
+  color: var(--espresso);
+}
+
+.btn--danger {
+  background: #c0504a;
+  color: #fff;
+}

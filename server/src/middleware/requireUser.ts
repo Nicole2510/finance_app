@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import type { User } from "@prisma/client";
 import { prisma } from "../db.js";
+import { DEFAULT_CATEGORIES } from "../lib/defaultCategories.js";
 
 // Lets routes use req.user with the right type
 declare global {
@@ -45,6 +46,8 @@ export const requireUser: RequestHandler = async (req, res, next) => {
         email,
         firstName: clerkUser.firstName,
         lastName: clerkUser.lastName,
+        // New users start with the default categories
+        categories: { create: DEFAULT_CATEGORIES },
       },
     });
   }

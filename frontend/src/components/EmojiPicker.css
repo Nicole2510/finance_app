@@ -1,0 +1,74 @@
+.emoji-picker__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.emoji-option {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: #f3ede8;
+  font-size: 22px;
+  color: var(--taupe);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* A little wiggle on hover, for the playful touch */
+.emoji-option:hover {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.emoji-option.is-selected {
+  border-color: var(--espresso);
+  background: var(--surface);
+}
+
+.emoji-picker__more {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.emoji-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 4px;
+}
+
+.emoji-picker__grid .emoji-option {
+  width: 40px;
+  height: 40px;
+  background: none;
+  font-size: 20px;
+}
+
+.emoji-picker__custom {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.emoji-picker__custom .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.emoji-picker__none {
+  margin-top: 8px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--taupe);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

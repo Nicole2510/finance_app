@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useClerk, useUser } from '@clerk/react'
 import { ChevronUp } from 'lucide-react'
+import { useDismiss } from '../lib/useDismiss'
 import './UserMenu.css'
 
 type Props = {
@@ -16,25 +17,10 @@ function UserMenu({ variant }: Props) {
   const { signOut } = useClerk()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const close = useCallback(() => setOpen(false), [])
 
   // Close when clicking outside the menu or pressing Escape
-  useEffect(() => {
-    if (!open) return
-
-    function onClick(e: MouseEvent) {
-      if (!menuRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('mousedown', onClick)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onClick)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
+  useDismiss(menuRef, open, close)
 
   if (!user) return null
 
@@ -84,6 +70,14 @@ function UserMenu({ variant }: Props) {
             onClick={() => setOpen(false)}
           >
             Profile
+          </Link>
+          <Link
+            to="/categories"
+            className="user-menu__item"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            Categories
           </Link>
           <button
             type="button"
