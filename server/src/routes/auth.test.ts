@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../app.js";
 import { prisma } from "../db.js";
-import { as, resetDb } from "../test/helpers.js";
+import { as, createTestAccount, resetDb } from "../test/helpers.js";
 
 beforeEach(resetDb);
 afterAll(() => prisma.$disconnect());
@@ -21,6 +21,10 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/income-sources"],
   ["patch", "/api/income-sources/:source"],
   ["delete", "/api/income-sources/:source"],
+  ["get", "/api/accounts"],
+  ["post", "/api/accounts"],
+  ["patch", "/api/accounts/:account"],
+  ["delete", "/api/accounts/:account"],
 ];
 
 describe("sign-in protection", () => {
@@ -29,11 +33,14 @@ describe("sign-in protection", () => {
     const alice = as("user_alice");
     const category = await alice.post("/api/categories", { name: "Pets", group: "WANTS" });
     const source = await alice.post("/api/income-sources", { name: "Acme" });
+    const user = await prisma.user.findFirstOrThrow();
+    const account = await createTestAccount(user.id);
     const before = await snapshot();
 
     const url = path
       .replace(":category", category.body.id)
-      .replace(":source", source.body.id);
+      .replace(":source", source.body.id)
+      .replace(":account", account.id);
 
     // No x-test-clerk-user header = not signed in
     const res = await request(app)[method](url).send({ name: "Hacked", group: "NEEDS" });
@@ -47,10 +54,11 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources] = await Promise.all([
+  const [users, categories, sources, accounts] = await Promise.all([
     prisma.user.findMany({ orderBy: { id: "asc" } }),
     prisma.category.findMany({ orderBy: { id: "asc" } }),
     prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
+    prisma.account.findMany({ orderBy: { id: "asc" } }),
   ]);
-  return { users, categories, sources };
+  return { users, categories, sources, accounts };
 }

@@ -4,6 +4,7 @@ import { clerkMiddleware } from "@clerk/express";
 import { meRouter } from "./routes/me.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { incomeSourcesRouter } from "./routes/incomeSources.js";
+import { accountsRouter } from "./routes/accounts.js";
 
 // Creates express app (kept separate from app.listen so tests can use it)
 export const app = express();
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/me", meRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/income-sources", incomeSourcesRouter);
+app.use("/api/accounts", accountsRouter);
 
 // Catch any error thrown in a route and send a safe response
 // (must be registered after all routes)

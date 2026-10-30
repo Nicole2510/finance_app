@@ -67,7 +67,10 @@ model Account {
   type           AccountType
   // Balance when added to the app; the current balance is calculated
   // from transactions so it can never drift
+  // Negative means money owed (e.g. a credit card balance)
   openingBalance Decimal       @default(0) @db.Decimal(12, 2)
+  // The day the opening balance was true; transactions count from this date
+  openingDate    DateTime      @db.Date
   archivedAt     DateTime?
   transactions   Transaction[]
 

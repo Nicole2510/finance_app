@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "../db.js";
-import { as, resetDb } from "../test/helpers.js";
+import { as, createTestAccount, resetDb } from "../test/helpers.js";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories.js";
 
 beforeEach(resetDb);
@@ -149,9 +149,7 @@ describe("updating categories", () => {
   it("blocks switching a used category between spending and income", async () => {
     const { id } = await groceries();
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
     await prisma.transaction.create({
       data: {
         type: "EXPENSE",
@@ -182,9 +180,7 @@ describe("deleting categories", () => {
     const list = await alice.get("/api/categories");
     const groceries = list.body.find((c: { name: string }) => c.name === "Groceries");
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
     await prisma.transaction.create({
       data: {
         type: "EXPENSE",
@@ -242,9 +238,7 @@ describe("database rules", () => {
   it("rejects a transaction amount of zero or less", async () => {
     const list = await alice.get("/api/categories");
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
 
     await expect(
       prisma.transaction.create({
