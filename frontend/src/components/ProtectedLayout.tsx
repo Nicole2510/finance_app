@@ -5,7 +5,7 @@ import { mainNav, secondaryNav } from './navItems'
 import './ProtectedLayout.css'
 
 // Wraps every page that needs a signed-in user.
-// Desktop: espresso sidebar. Phone: top bar + bottom tab bar.
+// Desktop: light sidebar. Phone: top bar + bottom tab bar.
 // Signed-out visitors are sent back to the home page.
 function ProtectedLayout() {
   const { isLoaded, isSignedIn } = useAuth()

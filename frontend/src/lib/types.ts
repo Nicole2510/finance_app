@@ -30,4 +30,5 @@ export type Account = {
   openingDate: string // "YYYY-MM-DD"
   currentBalance: string
   archivedAt: string | null
+  updatedAt: string
 }

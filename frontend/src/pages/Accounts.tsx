@@ -5,6 +5,7 @@ import { useApiFetch } from '../lib/api'
 import type { Account, AccountType } from '../lib/types'
 import { accountTypes } from '../lib/accountTypes'
 import DeleteModal from '../components/DeleteModal'
+import PageHeader from '../components/PageHeader'
 import AccountDetails from '../components/accounts/AccountDetails'
 import AccountFormModal, { type AccountValues } from '../components/accounts/AccountFormModal'
 import AccountList from '../components/accounts/AccountList'
@@ -102,15 +103,11 @@ function Accounts() {
 
   return (
     <div className="page accounts">
-      <header className="accounts__header">
-        <div>
-          <h1 className="page__title">Accounts</h1>
-          <p className="page__subtitle">Manage where your money lives.</p>
-        </div>
+      <PageHeader title="Accounts">
         <button type="button" className="btn btn--primary accounts__add" onClick={() => setAdding(true)}>
           <Plus size={18} /> Add account
         </button>
-      </header>
+      </PageHeader>
 
       {loadError ? (
         <p className="form-error">{loadError}</p>

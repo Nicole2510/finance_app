@@ -35,6 +35,7 @@ function toJson(account: Account, balance: Prisma.Decimal | undefined) {
     openingDate: account.openingDate.toISOString().slice(0, 10),
     currentBalance: (balance ?? account.openingBalance).toFixed(2),
     archivedAt: account.archivedAt,
+    updatedAt: account.updatedAt,
   };
 }
 
