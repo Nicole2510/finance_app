@@ -25,6 +25,8 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/accounts"],
   ["patch", "/api/accounts/:account"],
   ["delete", "/api/accounts/:account"],
+  ["get", "/api/transactions"],
+  ["post", "/api/transactions"],
 ];
 
 describe("sign-in protection", () => {
@@ -54,11 +56,12 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources, accounts] = await Promise.all([
+  const [users, categories, sources, accounts, transactions] = await Promise.all([
     prisma.user.findMany({ orderBy: { id: "asc" } }),
     prisma.category.findMany({ orderBy: { id: "asc" } }),
     prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
     prisma.account.findMany({ orderBy: { id: "asc" } }),
+    prisma.transaction.findMany({ orderBy: { id: "asc" } }),
   ]);
-  return { users, categories, sources, accounts };
+  return { users, categories, sources, accounts, transactions };
 }

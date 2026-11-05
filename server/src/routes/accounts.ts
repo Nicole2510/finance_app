@@ -5,7 +5,7 @@ import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { getBalances } from "../lib/balances.js";
 import { HttpError } from "../lib/httpError.js";
-import { nameSchema, parseBody } from "../lib/validation.js";
+import { dateSchema, moneySchema, nameSchema, parseBody } from "../lib/validation.js";
 
 export const accountsRouter = Router();
 accountsRouter.use(requireUser);
@@ -13,14 +13,9 @@ accountsRouter.use(requireUser);
 const createSchema = z.strictObject({
   name: nameSchema,
   type: z.enum(AccountType),
-  openingBalance: z.string().regex(/^-?\d{1,10}(\.\d{1,2})?$/, "must be a string of money, e.g. '2430.00'"),
-  openingDate: z.string().refine((value) => {
-    const date = new Date(value); // Accepts YYYY-MM-DD, creates date
-    if (isNaN(date.getTime())) return false; // Invalid date
-    return date.toISOString().slice(0, 10) === value;
-  }, "must be a valid date in the format YYYY-MM-DD"),
+  openingBalance: moneySchema,
+  openingDate: dateSchema,
 });
-// ───────────────────────────────────────────────────────────────────────────
 
 // Edits: any subset of the create fields, plus archive/restore
 const updateSchema = createSchema.partial().extend({ archived: z.boolean().optional() });
