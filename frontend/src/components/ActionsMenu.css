@@ -1,0 +1,73 @@
+.actions-menu {
+  position: relative;
+}
+
+.actions-menu__more {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--taupe);
+  cursor: pointer;
+}
+
+.actions-menu__more:hover,
+.actions-menu__more[aria-expanded='true'] {
+  background: var(--cream);
+  color: var(--espresso);
+}
+
+.actions-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.actions-menu__dropdown button {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--espresso);
+  cursor: pointer;
+}
+
+.actions-menu__dropdown button:hover {
+  background: var(--cream);
+}
+
+.actions-menu__dropdown svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.actions-menu__dropdown small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.actions-menu__dropdown .is-danger {
+  color: #b4443e;
+}

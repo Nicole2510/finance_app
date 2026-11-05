@@ -1,0 +1,58 @@
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  color: var(--espresso);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.account-row:hover { background: var(--cream); }
+.account-row.is-selected { background: var(--sand); }
+.account-row.is-archived .account-row__text,
+.account-row.is-archived .account-row__icon { opacity: 0.6; }
+
+.account-row:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+}
+
+.account-row__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--espresso-soft);
+}
+
+.account-row--chequing .account-row__icon { background: #f6ebdf; }
+.account-row--savings .account-row__icon { background: #e5ebe2; }
+.account-row--credit_card .account-row__icon { background: #f6e3e1; }
+.account-row--investment .account-row__icon { background: #e8e7f0; }
+.account-row--cash .account-row__icon { background: #ebe8e3; }
+
+.account-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-row__name,
+.account-row__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row__name { font-weight: 500; }
+
+.account-row__meta {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
