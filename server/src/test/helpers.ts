@@ -11,6 +11,19 @@ export async function resetDb() {
   await prisma.user.deleteMany();
 }
 
+// Creates a valid account directly in the database, for tests that
+// just need one to exist (e.g. to attach a transaction to)
+export function createTestAccount(userId: string) {
+  return prisma.account.create({
+    data: {
+      name: "Chequing",
+      type: "CHEQUING",
+      openingDate: new Date("2026-01-01"),
+      userId,
+    },
+  });
+}
+
 // Makes API requests "signed in" as the given fake Clerk user
 export function as(clerkUserId: string) {
   const auth = (r: request.Test) => r.set("x-test-clerk-user", clerkUserId);

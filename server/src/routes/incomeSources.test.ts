@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "../db.js";
-import { as, resetDb } from "../test/helpers.js";
+import { as, createTestAccount, resetDb } from "../test/helpers.js";
 
 beforeEach(resetDb);
 afterAll(() => prisma.$disconnect());
@@ -91,9 +91,7 @@ describe("income sources", () => {
     const categories = await alice.get("/api/categories");
     const salary = categories.body.find((c: { name: string }) => c.name === "Salary");
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
     const paycheck = await prisma.transaction.create({
       data: {
         type: "INCOME",
@@ -119,9 +117,7 @@ describe("income sources", () => {
     const categories = await alice.get("/api/categories");
     const salary = categories.body.find((c: { name: string }) => c.name === "Salary");
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
 
     const tx = await prisma.transaction.create({
       data: {
@@ -151,9 +147,7 @@ describe("deleting income sources", () => {
     const categories = await alice.get("/api/categories");
     const salary = categories.body.find((c: { name: string }) => c.name === "Salary");
     const user = await prisma.user.findFirstOrThrow();
-    const account = await prisma.account.create({
-      data: { name: "Chequing", type: "CHEQUING", userId: user.id },
-    });
+    const account = await createTestAccount(user.id);
     await prisma.transaction.create({
       data: {
         type: "INCOME",

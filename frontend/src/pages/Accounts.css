@@ -1,0 +1,38 @@
+.accounts__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.accounts__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+}
+
+.accounts__empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* List on the left, selected account on the right */
+.accounts__layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* Too narrow for both: show the list, or the account once one is selected */
+@media (max-width: 980px) {
+  .accounts__layout { grid-template-columns: minmax(0, 1fr); }
+  .accounts__layout.has-selection .account-list { display: none; }
+  .accounts__layout:not(.has-selection) .accounts__panel { display: none; }
+}

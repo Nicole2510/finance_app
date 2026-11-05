@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import ComingSoon from './pages/ComingSoon'
 import Categories from './pages/Categories'
+import Accounts from './pages/Accounts'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 
@@ -21,7 +22,7 @@ function App() {
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/accounts" element={<ComingSoon title="Accounts" />} />
+        <Route path="/accounts/:id?" element={<Accounts />} />
         <Route path="/transactions" element={<ComingSoon title="Transactions" />} />
         <Route path="/budgets" element={<ComingSoon title="Budgets" />} />
         <Route path="/debts" element={<ComingSoon title="Debts & Loans" />} />
