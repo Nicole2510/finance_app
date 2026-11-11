@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
   color: var(--espresso);
   text-decoration: none;
@@ -10,9 +10,8 @@
 }
 
 .account-row:hover { background: var(--cream); }
-.account-row.is-selected { background: var(--sand); }
-.account-row.is-archived .account-row__text,
-.account-row.is-archived .account-row__icon { opacity: 0.6; }
+.account-row.is-selected { background: var(--highlight); }
+.account-row.is-archived > * { opacity: 0.6; }
 
 .account-row:focus-visible {
   outline: 2px solid var(--rose);
@@ -23,9 +22,9 @@
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
   color: var(--espresso-soft);
 }
 
@@ -35,24 +34,18 @@
 .account-row--investment .account-row__icon { background: #e8e7f0; }
 .account-row--cash .account-row__icon { background: #ebe8e3; }
 
-.account-row__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.account-row__name {
+  flex: 1;
   min-width: 0;
-}
-
-.account-row__name,
-.account-row__meta {
   overflow: hidden;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.account-row__name { font-weight: 500; }
-
-.account-row__meta {
-  font-size: 14px;
-  color: var(--text-muted);
+.account-row__balance {
+  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
+
+.account-row__balance.is-negative { color: #b4443e; }

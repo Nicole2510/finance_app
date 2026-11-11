@@ -11,7 +11,8 @@ type Props = {
 
 // One account in the list; its link is what selects it
 function AccountRow({ account, selected }: Props) {
-  const { label, icon: Icon } = accountTypes[account.type]
+  const { icon: Icon } = accountTypes[account.type]
+  const overdrawn = account.type !== 'CREDIT_CARD' && Number(account.currentBalance) < 0
 
   return (
     <Link
@@ -20,13 +21,11 @@ function AccountRow({ account, selected }: Props) {
       aria-current={selected ? 'page' : undefined}
     >
       <span className="account-row__icon">
-        <Icon size={20} aria-hidden />
+        <Icon size={18} aria-hidden />
       </span>
-      <span className="account-row__text">
-        <span className="account-row__name">{account.name}</span>
-        <span className="account-row__meta">
-          {label} · {balanceText(account.type, account.currentBalance)}
-        </span>
+      <span className="account-row__name">{account.name}</span>
+      <span className={`account-row__balance${overdrawn ? ' is-negative' : ''}`}>
+        {balanceText(account.type, account.currentBalance)}
       </span>
     </Link>
   )

@@ -3,7 +3,7 @@ import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trash2 } from 'lucide-react
 import type { Account } from '../../lib/types' 
 import { accountTypes } from '../../lib/accountTypes'
 import { balanceText } from '../../lib/accountBalance'
-import { formatDate } from '../../lib/dates'
+import { daysAgo, formatDate } from '../../lib/dates'
 import ActionsMenu from '../ActionsMenu'
 import './AccountDetails.css'
 
@@ -17,6 +17,7 @@ type Props = {
 // Right panel: the selected account's balances and activity
 function AccountDetails({ account, onEdit, onToggleArchive, onDelete }: Props) {
   const archived = account.archivedAt !== null
+  const { label, icon: Icon } = accountTypes[account.type]
 
   return (
     <article className="account-details">
@@ -26,11 +27,20 @@ function AccountDetails({ account, onEdit, onToggleArchive, onDelete }: Props) {
       </Link>
 
       <header className="account-details__header">
-        <div>
+        <span className={`account-details__icon account-details__icon--${account.type.toLowerCase()}`}>
+          <Icon size={22} aria-hidden />
+        </span>
+        <div className="account-details__title">
           <h2 className="account-details__name">{account.name}</h2>
           <p className="account-details__type">
-            {accountTypes[account.type].label} account
+            {label} · updated {daysAgo(account.updatedAt)}
             {archived && <span className="account-details__badge">Archived</span>}
+          </p>
+        </div>
+        <div className="account-details__balance">
+          <p className="account-details__balance-label">Balance</p>
+          <p className="account-details__balance-amount">
+            {balanceText(account.type, account.currentBalance)}
           </p>
         </div>
         <ActionsMenu
@@ -58,13 +68,6 @@ function AccountDetails({ account, onEdit, onToggleArchive, onDelete }: Props) {
           ]}
         />
       </header>
-
-      <div className="account-details__balance">
-        <p className="account-details__balance-label">Current balance</p>
-        <p className="account-details__balance-amount">
-          {balanceText(account.type, account.currentBalance)}
-        </p>
-      </div>
 
       <dl className="account-details__facts">
         <div>

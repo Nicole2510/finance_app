@@ -1,5 +1,6 @@
 .account-details {
   padding: 28px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
@@ -15,14 +16,35 @@
 
 .account-details__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-details__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  color: var(--espresso-soft);
+}
+
+.account-details__icon--chequing { background: #f6ebdf; }
+.account-details__icon--savings { background: #e5ebe2; }
+.account-details__icon--credit_card { background: #f6e3e1; }
+.account-details__icon--investment { background: #e8e7f0; }
+.account-details__icon--cash { background: #ebe8e3; }
+
+.account-details__title {
+  flex: 1 1 160px;
+  min-width: 0;
 }
 
 .account-details__name {
   overflow-wrap: anywhere;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -41,40 +63,46 @@
 }
 
 .account-details__balance {
-  margin-top: 22px;
-  padding: 26px 28px;
-  border-radius: var(--radius-md);
-  background: var(--espresso);
-  color: var(--cream);
+  text-align: right;
 }
 
 .account-details__balance-label {
-  font-size: 14px;
-  opacity: 0.8;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .account-details__balance-amount {
-  margin-top: 8px;
-  font-size: clamp(30px, 5vw, 42px);
+  font-size: clamp(24px, 3vw, 32px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
 
 .account-details__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 24px 0 0;
+}
+
+.account-details__facts > div {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--cream);
 }
 
 .account-details__facts dt {
-  font-size: 14px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .account-details__facts dd {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
@@ -101,14 +129,11 @@
 
 @media (max-width: 480px) {
   .account-details { padding: 20px; }
-  .account-details__badge {
-  margin-left: 10px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--sand);
-  font-size: 13px;
-  color: var(--espresso-soft);
-}
 
-.account-details__balance { padding: 22px; }
+  /* The balance drops to its own line, under the name */
+  .account-details__balance {
+    order: 1;
+    width: 100%;
+    text-align: left;
+  }
 }

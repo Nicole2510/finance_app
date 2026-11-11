@@ -1,30 +1,28 @@
-/* ---------- Desktop: floating espresso sidebar ---------- */
+/* ---------- Desktop: light sidebar attached to the left edge ---------- */
 .app {
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 24px;
+  grid-template-columns: 248px 1fr;
   min-height: 100vh;
-  padding: 16px;
 }
 
 .sidebar {
   position: sticky;
-  top: 16px;
+  top: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 32px);
-  padding: 24px 16px 16px;
-  border-radius: var(--radius-lg);
-  background: #463a35;
-  color: var(--cream);
+  height: 100vh;
+  padding: 24px 14px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--espresso);
 }
 
 .sidebar__logo {
-  padding: 0 12px 24px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid rgba(246, 241, 236, 0.15);
-  font-family: var(--font-serif);
-  font-size: 30px;
+  padding: 0 12px 20px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .sidebar__nav {
@@ -39,34 +37,36 @@
   gap: 8px;
   padding-top: 16px;
   margin-top: auto;
-  border-top: 1px solid rgba(246, 241, 236, 0.15);
+  border-top: 1px solid var(--border);
 }
 
 .sidebar__link {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
+  font-size: 15px;
   text-decoration: none;
-  color: rgba(246, 241, 236, 0.8);
+  color: var(--espresso-soft);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .sidebar__link:hover {
-  background: rgba(246, 241, 236, 0.08);
-  color: var(--cream);
+  background: var(--cream);
+  color: var(--espresso);
 }
 
 /* NavLink adds .active to the current page */
 .sidebar__link.active {
-  background: #75645a;
-  color: var(--cream);
+  background: var(--highlight);
+  color: var(--espresso);
+  font-weight: 500;
 }
 
 .app__main {
   min-width: 0;
-  padding: 24px 16px;
+  padding: 32px;
 }
 
 /* Phone-only pieces are hidden on desktop */
@@ -99,8 +99,9 @@
   }
 
   .mobile-header__logo {
-    font-family: var(--font-serif);
-    font-size: 24px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
   }
 
   /* Leave room so the tab bar doesn't cover the page bottom */
@@ -117,8 +118,9 @@
     display: flex;
     justify-content: space-around;
     padding: 8px;
-    border-radius: var(--radius-md);
-    background: #463a35;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
     box-shadow: var(--shadow-soft);
   }
 
@@ -132,11 +134,11 @@
     border-radius: var(--radius-sm);
     font-size: 11px;
     text-decoration: none;
-    color: rgba(246, 241, 236, 0.7);
+    color: var(--text-muted);
   }
 
   .tab-bar__link.active {
-    background: #75645a;
-    color: var(--cream);
+    background: var(--highlight);
+    color: var(--espresso);
   }
 }

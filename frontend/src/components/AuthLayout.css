@@ -39,9 +39,9 @@
 }
 
 .auth__logo {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(40px, 5vw, 60px);
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .auth__tagline {
@@ -65,9 +65,9 @@
 }
 
 .auth__heading {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 36px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .auth__subtext {
@@ -82,7 +82,7 @@
   max-width: 320px;
   padding: 14px;
   border: 1px solid var(--espresso);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   text-align: center;
   text-decoration: none;
   font-weight: 500;

@@ -174,6 +174,16 @@ describe("editing accounts", () => {
     expect(await prisma.transaction.findUnique({ where: { id: tx.id } })).not.toBeNull();
   });
 
+  it("moves updatedAt forward when an account is edited", async () => {
+    const { body: account } = await alice.post("/api/accounts", valid);
+
+    const res = await alice.patch(`/api/accounts/${account.id}`, { name: "New name" });
+
+    expect(new Date(res.body.updatedAt).getTime()).toBeGreaterThan(
+      new Date(account.updatedAt).getTime(),
+    );
+  });
+
   it("renames and changes type", async () => {
     const { body: account } = await alice.post("/api/accounts", valid);
     const res = await alice.patch(`/api/accounts/${account.id}`, {

@@ -21,9 +21,9 @@
 }
 
 .nayad-clerk__title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--espresso);
 }
 
@@ -40,7 +40,7 @@
 .nayad-clerk__input {
   padding: 12px 18px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--cream);
   font-size: 15px;
   color: var(--espresso);

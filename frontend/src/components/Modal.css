@@ -67,9 +67,9 @@
 .modal__title {
   padding-right: 40px;
   margin-bottom: 20px;
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 26px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 /* Phones: a bit less padding so content has room */
@@ -144,9 +144,9 @@
 }
 
 .btn {
-  padding: 14px 18px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -163,12 +163,14 @@
 }
 
 .btn--primary {
-  background: var(--espresso);
+  background: linear-gradient(180deg, var(--espresso-soft), var(--espresso));
   color: var(--cream);
+  box-shadow: 0 1px 2px rgba(47, 39, 36, 0.3);
 }
 
 .btn--secondary {
-  background: #efe8e2;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
   color: var(--espresso);
 }
 
