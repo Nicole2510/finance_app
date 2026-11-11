@@ -1,0 +1,33 @@
+/* The negative margins undo .app__main's padding so the bar and its line
+   reach both edges of the page */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 69px;
+  padding: 12px 32px;
+  margin: -32px -32px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--app-bg);
+}
+
+.page-header__title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* On phones the app's top bar is the sticky one, so this one scrolls away */
+@media (max-width: 860px) {
+  .page-header {
+    position: static;
+    min-height: 60px;
+    padding: 10px 16px;
+    margin: -24px -16px 20px;
+  }
+}

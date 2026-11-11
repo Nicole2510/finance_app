@@ -25,7 +25,7 @@
   border-radius: 50%;
   background: var(--blush);
   color: var(--espresso);
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 18px;
   box-shadow: 0 0 0 2px var(--surface);
   transition: box-shadow 0.15s ease;
@@ -47,11 +47,11 @@
   width: 100%;
   padding: 10px;
   border-radius: var(--radius-sm);
-  background: rgba(246, 241, 236, 0.08);
+  background: var(--cream);
 }
 
 .user-menu--sidebar .user-menu__trigger:hover {
-  background: rgba(246, 241, 236, 0.14);
+  background: var(--highlight);
 }
 
 .user-menu--sidebar .user-menu__avatar {

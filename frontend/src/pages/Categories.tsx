@@ -6,6 +6,7 @@ import Modal from '../components/Modal'
 import ItemRow from '../components/ItemRow'
 import ItemFormModal, { type ItemKind, type ItemValues } from '../components/ItemFormModal'
 import DeleteModal from '../components/DeleteModal'
+import PageHeader from '../components/PageHeader'
 import './Page.css'
 import './Categories.css'
 
@@ -138,15 +139,11 @@ function Categories() {
 
   return (
     <div className="page categories">
-      <header className="categories__header">
-        <div>
-          <h1 className="page__title categories__title">Categories</h1>
-          <p className="page__subtitle">Organize your money your way.</p>
-        </div>
+      <PageHeader title="Categories">
         <button type="button" className="btn btn--primary categories__add" onClick={() => setPopup({ type: 'choose' })}>
           <Plus size={18} /> Add
         </button>
-      </header>
+      </PageHeader>
 
       <div className="tiles">
         {TILES.map((t) => {

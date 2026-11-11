@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import type { Account } from '../../lib/types'
+import type { Account, AccountType } from '../../lib/types'
+import { accountTypes } from '../../lib/accountTypes'
 import AccountFilters, { type TypeFilter } from './AccountFilters'
+import AccountGroup from './AccountGroup'
 import AccountRow from './AccountRow'
 import './AccountList.css'
 
@@ -49,9 +51,12 @@ function AccountList({
           )}
         </div>
       ) : (
-        active.map((account) => (
-          <AccountRow key={account.id} account={account} selected={account.id === selectedId} />
-        ))
+        (Object.keys(accountTypes) as AccountType[]).map((groupType) => {
+          const inGroup = active.filter((a) => a.type === groupType)
+          return inGroup.length > 0 && (
+            <AccountGroup key={groupType} type={groupType} accounts={inGroup} selectedId={selectedId} />
+          )
+        })
       )}
 
       {archived.length > 0 && (

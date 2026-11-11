@@ -6,6 +6,8 @@
   --sand: #e8dfd8;
   --cream: #f6f1ec;
   --surface: #ffffff;
+  --app-bg: #faf7f4;
+  --highlight: #f1e9e2;
   --blush: #e6b8b2;
   --rose: #d98a80;
   --sage: #7d9a82;
@@ -15,19 +17,20 @@
   --text-muted: var(--taupe);
   --border: var(--sand);
 
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 32px;
-  --shadow-soft: 0 20px 50px -20px rgba(47, 39, 36, 0.25);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 12px 32px -16px rgba(47, 39, 36, 0.22);
 
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+  /* Headings and the logo; swap in a serif here to change them everywhere */
+  --font-display: var(--font-sans);
 
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
-  background: var(--cream);
+  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
