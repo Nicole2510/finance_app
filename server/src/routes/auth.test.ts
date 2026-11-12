@@ -27,6 +27,8 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["delete", "/api/accounts/:account"],
   ["get", "/api/transactions"],
   ["post", "/api/transactions"],
+  ["patch", "/api/transactions/:transaction"],
+  ["delete", "/api/transactions/:transaction"],
 ];
 
 describe("sign-in protection", () => {
@@ -37,12 +39,23 @@ describe("sign-in protection", () => {
     const source = await alice.post("/api/income-sources", { name: "Acme" });
     const user = await prisma.user.findFirstOrThrow();
     const account = await createTestAccount(user.id);
+    const transaction = await prisma.transaction.create({
+      data: {
+        type: "EXPENSE",
+        amount: "10.00",
+        date: new Date("2026-10-01"),
+        userId: user.id,
+        accountId: account.id,
+        categoryId: category.body.id,
+      },
+    });
     const before = await snapshot();
 
     const url = path
       .replace(":category", category.body.id)
       .replace(":source", source.body.id)
-      .replace(":account", account.id);
+      .replace(":account", account.id)
+      .replace(":transaction", transaction.id);
 
     // No x-test-clerk-user header = not signed in
     const res = await request(app)[method](url).send({ name: "Hacked", group: "NEEDS" });

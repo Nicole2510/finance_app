@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Transaction } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
@@ -20,6 +20,9 @@ const createSchema = z.strictObject({
   incomeSourceId: z.uuid().nullish(),
   notes: z.string().trim().max(200, "notes must be at most 200 characters").nullish(),
 });
+
+// Edits: any of the same fields; incomeSourceId: null removes the source
+const updateSchema = createSchema.partial();
 
 const listSchema = z.object({
   month: z
@@ -67,16 +70,31 @@ type References = Pick<
   "type" | "date" | "accountId" | "categoryId" | "incomeSourceId"
 >;
 
+type Kept = Pick<Transaction, "accountId" | "categoryId" | "incomeSourceId">;
+
 // Checks that everything a transaction points to belongs to this user, is still
 // active, and fits together. Someone else's record gets the same message as a
 // missing one, so this can't be used to discover what other users have.
-async function assertValidReferences(userId: string, data: References) {
+// When editing, `kept` is the transaction as it was: records it already used
+// may have been archived since, and that's fine, so old transactions stay editable.
+async function assertValidReferences(userId: string, data: References, kept?: Kept) {
+  const activeUnless = (id: string, keptId: string | null | undefined) =>
+    id === keptId ? {} : { archivedAt: null };
+
   const [account, category, source] = await Promise.all([
-    prisma.account.findFirst({ where: { id: data.accountId, userId, archivedAt: null } }),
-    prisma.category.findFirst({ where: { id: data.categoryId, userId, archivedAt: null } }),
+    prisma.account.findFirst({
+      where: { id: data.accountId, userId, ...activeUnless(data.accountId, kept?.accountId) },
+    }),
+    prisma.category.findFirst({
+      where: { id: data.categoryId, userId, ...activeUnless(data.categoryId, kept?.categoryId) },
+    }),
     data.incomeSourceId
       ? prisma.incomeSource.findFirst({
-          where: { id: data.incomeSourceId, userId, archivedAt: null },
+          where: {
+            id: data.incomeSourceId,
+            userId,
+            ...activeUnless(data.incomeSourceId, kept?.incomeSourceId),
+          },
         })
       : null,
   ]);
@@ -129,4 +147,54 @@ transactionsRouter.post("/", async (req, res) => {
     include: related,
   });
   res.status(201).json(toJson(transaction));
+});
+
+// Finds a transaction only if it belongs to this user; otherwise 404
+async function findOwned(userId: string, id: string) {
+  const transaction = await prisma.transaction.findFirst({ where: { id, userId } });
+  if (!transaction) throw new HttpError(404, "Transaction not found");
+  return transaction;
+}
+
+transactionsRouter.patch("/:id", async (req, res) => {
+  const userId = req.user!.id;
+  const existing = await findOwned(userId, req.params.id);
+  const changes = parseBody(updateSchema, req.body);
+  if (existing.type === "TRANSFER") throw new HttpError(400, "Transfers can't be edited yet");
+
+  // Check the transaction as it would be after the change, not just the new
+  // fields: e.g. switching to income also needs an income category
+  await assertValidReferences(
+    userId,
+    {
+      type: changes.type ?? existing.type,
+      date: changes.date ?? existing.date.toISOString().slice(0, 10),
+      accountId: changes.accountId ?? existing.accountId,
+      categoryId: changes.categoryId ?? existing.categoryId,
+      incomeSourceId:
+        changes.incomeSourceId === undefined ? existing.incomeSourceId : changes.incomeSourceId,
+    },
+    existing,
+  );
+
+  const transaction = await prisma.transaction.update({
+    where: { id: existing.id },
+    data: { ...changes, ...(changes.date ? { date: new Date(changes.date) } : {}) },
+    include: related,
+  });
+  res.json(toJson(transaction));
+});
+
+// Delete a transaction
+transactionsRouter.delete("/:id", async (req, res) => {
+  // Find the transaction, or 404 if it doesn't belong to this user
+  const transaction = await findOwned(req.user!.id, req.params.id);
+
+  // Delete the transaction from the database
+  await prisma.transaction.delete({ 
+    where: { id: transaction.id },
+  });
+
+  // Respond with 204 No Content to indicate successful deletion
+  res.status(204).end();
 });

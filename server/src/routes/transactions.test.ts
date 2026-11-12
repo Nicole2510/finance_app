@@ -376,3 +376,185 @@ describe("data isolation", () => {
     expect(await prisma.transaction.count()).toBe(0);
   });
 });
+
+// Adds an expense through the API and returns it
+async function addExpense(user: ReturnType<typeof as>, accountId: string, categoryId: string) {
+  const { body } = await user.post("/api/transactions", {
+    type: "EXPENSE",
+    amount: "100.00",
+    date: "2026-10-18",
+    accountId,
+    categoryId,
+    notes: "Weekly shop",
+  });
+  return body;
+}
+
+describe("editing transactions", () => {
+  it("changes the amount and the balance follows", async () => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, { amount: "40.50" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.amount).toBe("40.50");
+    expect(await balanceOf(alice, account.id)).toBe("959.50"); // 1000 − 40.50
+  });
+
+  it("changes the date, category and notes, and can clear the notes", async () => {
+    const { account, groceries, rent } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    const moved = await alice.patch(`/api/transactions/${tx.id}`, {
+      date: "2026-10-20",
+      categoryId: rent,
+    });
+    const cleared = await alice.patch(`/api/transactions/${tx.id}`, { notes: null });
+
+    expect(moved.body).toMatchObject({ date: "2026-10-20", category: { id: rent } });
+    expect(cleared.body.notes).toBeNull();
+    expect(cleared.body.date).toBe("2026-10-20"); // earlier edit kept
+  });
+
+  it("switches an expense to income when the category changes too", async () => {
+    const { account, groceries, salary } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, {
+      type: "INCOME",
+      categoryId: salary,
+    });
+
+    expect(res.status).toBe(200);
+    expect(await balanceOf(alice, account.id)).toBe("1100.00"); // 1000 + 100
+  });
+
+  it("checks the whole transaction after the change, not just the new fields", async () => {
+    const { account, groceries, salary } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    // Income with the expense category it already had
+    const typeOnly = await alice.patch(`/api/transactions/${tx.id}`, { type: "INCOME" });
+    // An income category on what's still an expense
+    const categoryOnly = await alice.patch(`/api/transactions/${tx.id}`, { categoryId: salary });
+
+    expect(typeOnly.status).toBe(400);
+    expect(categoryOnly.status).toBe(400);
+  });
+
+  it("removes an income source when switching income to an expense", async () => {
+    const { account, groceries, salary } = await setUp(alice);
+    const { body: source } = await alice.post("/api/income-sources", { name: "Acme" });
+    const { body: tx } = await alice.post("/api/transactions", {
+      type: "INCOME",
+      amount: "50",
+      date: "2026-10-18",
+      accountId: account.id,
+      categoryId: salary,
+      incomeSourceId: source.id,
+    });
+
+    const keepsSource = await alice.patch(`/api/transactions/${tx.id}`, {
+      type: "EXPENSE",
+      categoryId: groceries,
+    });
+    const dropsSource = await alice.patch(`/api/transactions/${tx.id}`, {
+      type: "EXPENSE",
+      categoryId: groceries,
+      incomeSourceId: null,
+    });
+
+    expect(keepsSource.status).toBe(400);
+    expect(dropsSource.status).toBe(200);
+    expect(dropsSource.body.incomeSource).toBeNull();
+  });
+
+  it("still allows editing after its category or account is archived", async () => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+    await alice.patch(`/api/categories/${groceries}`, { archived: true });
+    await alice.patch(`/api/accounts/${account.id}`, { archived: true });
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, { notes: "Fixed typo" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.notes).toBe("Fixed typo");
+  });
+
+  it("won't move a transaction onto an archived category", async () => {
+    const { account, groceries, rent } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+    await alice.patch(`/api/categories/${rent}`, { archived: true });
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, { categoryId: rent });
+
+    expect(res.status).toBe(400);
+  });
+
+  it.each<[object, string]>([
+    [{ amount: "0" }, "zero amount"],
+    [{ amount: "-5" }, "negative amount"],
+    [{ date: "2026-09-30" }, "before the account's opening date"],
+    [{ date: "2026-02-30" }, "not a real date"],
+    [{ type: "TRANSFER" }, "transfers aren't supported yet"],
+    [{ userId: "someone-else" }, "sneaking in another user"],
+  ])("rejects %o (%s) and leaves it unchanged", async (change) => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, change);
+
+    expect(res.status).toBe(400);
+    const stored = await prisma.transaction.findUniqueOrThrow({ where: { id: tx.id } });
+    expect(stored.amount.toFixed(2)).toBe("100.00");
+    expect(stored.date.toISOString().slice(0, 10)).toBe("2026-10-18");
+  });
+});
+
+describe("deleting transactions", () => {
+  it("deletes a transaction and the balance goes back", async () => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+
+    const res = await alice.delete(`/api/transactions/${tx.id}`);
+
+    expect(res.status).toBe(204);
+    expect(await prisma.transaction.count()).toBe(0);
+    expect(await balanceOf(alice, account.id)).toBe("1000.00");
+  });
+
+  it("returns 404 for a transaction that doesn't exist", async () => {
+    await setUp(alice);
+
+    const res = await alice.delete("/api/transactions/00000000-0000-4000-8000-000000000000");
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("editing and deleting are private", () => {
+  it("returns 404 when another user tries to change or delete a transaction", async () => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+    await setUp(bob);
+
+    const edit = await bob.patch(`/api/transactions/${tx.id}`, { amount: "1" });
+    const remove = await bob.delete(`/api/transactions/${tx.id}`);
+
+    expect(edit.status).toBe(404);
+    expect(remove.status).toBe(404);
+    const stored = await prisma.transaction.findUniqueOrThrow({ where: { id: tx.id } });
+    expect(stored.amount.toFixed(2)).toBe("100.00");
+  });
+
+  it("won't move a transaction onto another user's account", async () => {
+    const mine = await setUp(alice);
+    const theirs = await setUp(bob);
+    const tx = await addExpense(alice, mine.account.id, mine.groceries);
+
+    const res = await alice.patch(`/api/transactions/${tx.id}`, { accountId: theirs.account.id });
+
+    expect(res.status).toBe(400);
+  });
+});
