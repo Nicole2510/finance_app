@@ -18,8 +18,13 @@ describe("default categories", () => {
     expect(res.body).toContainEqual(
       expect.objectContaining({ name: "Groceries", emoji: "🛒", group: "NEEDS" }),
     );
-    expect(res.body).toContainEqual(
-      expect.objectContaining({ name: "Salary", emoji: "💼", group: "INCOME" }),
+    expect(res.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Salary", emoji: "💼", group: "INCOME" }),
+        expect.objectContaining({ name: "Savings", group: "SAVINGS" }),
+        expect.objectContaining({ name: "Debt Payments", group: "DEBT" }),
+        expect.objectContaining({ name: "Investments", group: "INVESTMENTS" }),
+      ]),
     );
   });
 
@@ -61,6 +66,7 @@ describe("creating categories", () => {
   it.each([
     [{ name: "", group: "NEEDS" }, "empty name"],
     [{ name: "Pets", group: "FUN" }, "unknown group"],
+    [{ name: "Pets", group: "SAVINGS_DEBT" }, "the old combined group"],
     [{ name: "Pets", group: "WANTS", emoji: "abc" }, "text instead of emoji"],
     [{ name: "Pets", group: "WANTS", emoji: "🐶🐱" }, "two emojis"],
     [{ name: "Pets", group: "WANTS", userId: "someone-else" }, "unexpected field"],
@@ -84,6 +90,13 @@ describe("updating categories", () => {
     const list = await alice.get("/api/categories");
     return list.body.find((c: { name: string }) => c.name === "Groceries");
   }
+
+  it.each(["SAVINGS", "DEBT", "INVESTMENTS"])("creates a category in the %s group", async (group) => {
+    const res = await alice.post("/api/categories", { name: "Emergency fund", group });
+
+    expect(res.status).toBe(201);
+    expect(res.body.group).toBe(group);
+  });
 
   it("renames, changes group, and changes emoji", async () => {
     const { id } = await groceries();

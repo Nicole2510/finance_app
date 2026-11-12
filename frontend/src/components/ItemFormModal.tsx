@@ -22,7 +22,9 @@ const SUGGESTIONS: Record<ItemKind, string[]> = {
 const EXPENSE_GROUPS: { id: CategoryGroup; label: string }[] = [
   { id: 'NEEDS', label: 'Needs' },
   { id: 'WANTS', label: 'Wants' },
-  { id: 'SAVINGS_DEBT', label: 'Savings & Debt' },
+  { id: 'SAVINGS', label: 'Savings' },
+  { id: 'DEBT', label: 'Debt' },
+  { id: 'INVESTMENTS', label: 'Investments' },
 ]
 
 type Props = {

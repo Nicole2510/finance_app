@@ -7,6 +7,7 @@ import './DatePicker.css'
 type Props = {
   value: string // "YYYY-MM-DD"
   onChange: (value: string) => void
+  min?: string // earliest selectable day, "YYYY-MM-DD"
   max?: string // latest selectable day, "YYYY-MM-DD"
 }
 
@@ -42,7 +43,7 @@ const monthTitle = (year: number, month: number) =>
   new Date(year, month, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
 
 // A date field that opens a Nayad-styled month calendar below it
-function DatePicker({ value, onChange, max }: Props) {
+function DatePicker({ value, onChange, min, max }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(() => parse(value)) // which month is showing
@@ -50,6 +51,8 @@ function DatePicker({ value, onChange, max }: Props) {
 
   const maxMonth = max ? parse(max) : null
   const atMaxMonth = maxMonth && view.year === maxMonth.year && view.month === maxMonth.month
+  const minMonth = min ? parse(min) : null
+  const atMinMonth = minMonth && view.year === minMonth.year && view.month === minMonth.month
 
   function shiftMonth(by: number) {
     const d = new Date(view.year, view.month + by, 1)
@@ -91,7 +94,13 @@ function DatePicker({ value, onChange, max }: Props) {
         <div className="date-picker__panel" role="group" aria-label="Choose a date">
           <div className="date-picker__header">
             <span className="date-picker__title">{monthTitle(view.year, view.month)}</span>
-            <button type="button" className="date-picker__nav" aria-label="Previous month" onClick={() => shiftMonth(-1)}>
+            <button
+              type="button"
+              className="date-picker__nav"
+              aria-label="Previous month"
+              disabled={!!atMinMonth}
+              onClick={() => shiftMonth(-1)}
+            >
               <ArrowLeft size={20} />
             </button>
             <button
@@ -119,7 +128,7 @@ function DatePicker({ value, onChange, max }: Props) {
                 aria-label={formatDate(key)}
                 aria-pressed={key === value}
                 // String comparison works because "YYYY-MM-DD" sorts like a date
-                disabled={!!max && key > max}
+                disabled={(!!max && key > max) || (!!min && key < min)}
                 onClick={() => pick(key)}
               >
                 {day}

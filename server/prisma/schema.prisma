@@ -136,9 +136,12 @@ enum TransactionType {
 }
 
 // Budget group for a category (50/30/20 rule); income is its own group
+// SAVINGS, DEBT and INVESTMENTS together make up the "20%" in 50/30/20
 enum CategoryGroup {
   NEEDS
   WANTS
-  SAVINGS_DEBT
+  SAVINGS
+  DEBT
+  INVESTMENTS
   INCOME
 }

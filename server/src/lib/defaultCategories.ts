@@ -17,8 +17,9 @@ export const DEFAULT_CATEGORIES: { name: string; emoji: string; group: CategoryG
   { name: "Gifts", emoji: "🎁", group: "WANTS" },
   { name: "Travel", emoji: "✈️", group: "WANTS" },
 
-  { name: "Savings", emoji: "🐷", group: "SAVINGS_DEBT" },
-  { name: "Debt Payments", emoji: "💳", group: "SAVINGS_DEBT" },
+  { name: "Savings", emoji: "🐷", group: "SAVINGS" },
+  { name: "Debt Payments", emoji: "💳", group: "DEBT" },
+  { name: "Investments", emoji: "📈", group: "INVESTMENTS" },
 
   { name: "Salary", emoji: "💼", group: "INCOME" },
   { name: "Other Income", emoji: "💰", group: "INCOME" },

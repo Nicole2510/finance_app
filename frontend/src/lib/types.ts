@@ -1,6 +1,7 @@
 // Shapes returned by the API
 
-export type CategoryGroup = 'NEEDS' | 'WANTS' | 'SAVINGS_DEBT' | 'INCOME'
+// SAVINGS, DEBT and INVESTMENTS together make up the "20%" in 50/30/20
+export type CategoryGroup = 'NEEDS' | 'WANTS' | 'SAVINGS' | 'DEBT' | 'INVESTMENTS' | 'INCOME'
 
 export type Category = {
   id: string
@@ -31,4 +32,16 @@ export type Account = {
   currentBalance: string
   archivedAt: string | null
   updatedAt: string
+}
+
+// A transaction comes with the names of what it belongs to, so lists can show them
+export type Transaction = {
+  id: string
+  type: 'INCOME' | 'EXPENSE'
+  amount: string // always positive; type gives the direction
+  date: string // "YYYY-MM-DD"
+  notes: string | null
+  account: { id: string; name: string }
+  category: { id: string; name: string; emoji: string | null; group: CategoryGroup }
+  incomeSource: { id: string; name: string } | null
 }

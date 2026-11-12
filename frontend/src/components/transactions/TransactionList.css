@@ -1,0 +1,83 @@
+.transaction-list {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.transaction-list__day + .transaction-list__day {
+  border-top: 1px solid var(--border);
+}
+
+.transaction-list__date {
+  padding: 14px 4px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.transaction-list ul {
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
+}
+
+.transaction-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.transaction-row:hover { background: var(--cream); }
+
+.transaction-row:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+}
+
+.transaction-row__emoji {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  font-size: 18px;
+}
+
+.transaction-row__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.transaction-row__name { font-weight: 500; }
+
+.transaction-row__details {
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-row__amount {
+  flex-shrink: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-row__amount.is-income { color: var(--forest); }

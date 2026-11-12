@@ -1,4 +1,4 @@
-import { formatMoney } from './money'
+import { formatMoney, sumAmounts } from './money'
 import type { Account, AccountType } from './types'
 
 // entered - the amount typed in the form, as a string
@@ -16,9 +16,7 @@ export function balanceText(type: AccountType, amount: string) {
   return `${formatMoney(String(-Number(amount)))} owed`
 }
 
-// Total of several current balances. Added up in whole cents, because adding
-// decimals directly can pick up rounding errors (0.1 + 0.2 = 0.30000000000000004)
+// Total of several current balances, e.g. a group's subtotal
 export function sumBalances(accounts: Account[]) {
-  const cents = accounts.reduce((sum, a) => sum + Math.round(Number(a.currentBalance) * 100), 0)
-  return (cents / 100).toFixed(2)
+  return sumAmounts(accounts.map((a) => a.currentBalance))
 }

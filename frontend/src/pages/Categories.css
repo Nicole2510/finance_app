@@ -33,7 +33,9 @@
 
 .tile--needs { background: #f6ebdf; }
 .tile--wants { background: #f6e3e1; }
-.tile--savings_debt { background: #e5ebe2; }
+.tile--savings { background: #e5ebe2; }
+.tile--debt { background: #f3e9df; }
+.tile--investments { background: #e3eaec; }
 .tile--income { background: #e8e7f0; }
 .tile--sources { background: #ebe8e3; }
 
