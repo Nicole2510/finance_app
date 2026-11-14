@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
-import { currentMonth, monthLabel } from '../lib/dates'
+import { currentMonth, dayLabel, monthLabel } from '../lib/dates'
+import { formatMoney } from '../lib/money'
 import { NO_FILTERS, type Filters } from '../lib/transactionFilters'
 import type { Account, Category, IncomeSource, Transaction } from '../lib/types'
+import DeleteModal from '../components/DeleteModal'
 import PageHeader from '../components/PageHeader'
 import MonthSwitcher from '../components/transactions/MonthSwitcher'
 import MonthTotals from '../components/transactions/MonthTotals'
@@ -39,6 +41,7 @@ function Transactions() {
   } | null>(null)
   const [form, setForm] = useState<{ transaction?: Transaction } | null>(null)
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
+  const [deleting, setDeleting] = useState<Transaction | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -89,6 +92,18 @@ function Transactions() {
     }
     const savedMonth = values.date.slice(0, 7)
     if (savedMonth !== month) setParams({ month: savedMonth })
+    setVersion((v) => v + 1)
+    return null
+  }
+
+  // Deletes after the confirm popup; returns the reason if it fails
+  async function deleteTransaction() {
+    if (!deleting) return null
+    try {
+      await apiFetch(`/api/transactions/${deleting.id}`, { method: 'DELETE' })
+    } catch (err) {
+      return (err as Error).message
+    }
     setVersion((v) => v + 1)
     return null
   }
@@ -145,6 +160,21 @@ function Transactions() {
           {...lookups}
           onClose={() => setForm(null)}
           onSubmit={saveTransaction}
+          onDelete={() => {
+            // Swap the form for the confirm popup, so only one is open at a time
+            setDeleting(form.transaction ?? null)
+            setForm(null)
+          }}
+        />
+      )}
+
+      {deleting && (
+        <DeleteModal
+          name={deleting.category.name}
+          kindLabel="transaction"
+          details={`${formatMoney(deleting.amount)} · ${dayLabel(deleting.date)}`}
+          onClose={() => setDeleting(null)}
+          onDelete={deleteTransaction}
         />
       )}
     </div>

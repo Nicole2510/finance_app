@@ -5,14 +5,17 @@ import Modal from './Modal'
 type Props = {
   name: string
   kindLabel: string // "category" or "income source"
+  details?: string // short extra line, e.g. "$50.00 · Thu, Nov 12"
   onClose: () => void
   // Returns an error message (e.g. "has transactions"), or null if deleted
   onDelete: () => Promise<string | null>
-  onArchive: () => Promise<void>
+  // Offered when deleting is refused, e.g. an account with transactions.
+  // Left out for things that can't be archived, like a transaction.
+  onArchive?: () => Promise<void>
 }
 
 // "Are you sure?" popup. If the item is in use, offers archiving instead.
-function DeleteModal({ name, kindLabel, onClose, onDelete, onArchive }: Props) {
+function DeleteModal({ name, kindLabel, details, onClose, onDelete, onArchive }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -26,7 +29,7 @@ function DeleteModal({ name, kindLabel, onClose, onDelete, onArchive }: Props) {
 
   async function archive() {
     setBusy(true)
-    await onArchive()
+    await onArchive?.()
     onClose()
   }
 
@@ -44,7 +47,9 @@ function DeleteModal({ name, kindLabel, onClose, onDelete, onArchive }: Props) {
           </p>
         ) : (
           <p className="delete-modal__note">
-            This will permanently delete the {kindLabel}. It can't be undone.
+            {details
+              ? `${details}. This can't be undone.`
+              : `This will permanently delete the ${kindLabel}. It can't be undone.`}
           </p>
         )}
 
@@ -52,7 +57,7 @@ function DeleteModal({ name, kindLabel, onClose, onDelete, onArchive }: Props) {
           <button type="button" className="btn btn--secondary" onClick={onClose}>
             Cancel
           </button>
-          {error ? (
+          {error && onArchive ? (
             <button type="button" className="btn btn--primary" disabled={busy} onClick={archive}>
               Archive instead
             </button>

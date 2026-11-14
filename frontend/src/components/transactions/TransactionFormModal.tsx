@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import Modal from '../Modal'
 import DatePicker from '../DatePicker'
 import { categoriesFor } from '../../lib/categories'
@@ -26,10 +27,19 @@ type Props = {
   onClose: () => void
   // Returns an error message to show, or null if it saved
   onSubmit: (values: TransactionValues) => Promise<string | null>
+  onDelete?: () => void // only when editing; the page asks to confirm
 }
 
 // Add / edit transaction popup
-function TransactionFormModal({ transaction: t, accounts, categories, sources, onClose, onSubmit }: Props) {
+function TransactionFormModal({
+  transaction: t,
+  accounts,
+  categories,
+  sources,
+  onClose,
+  onSubmit,
+  onDelete,
+}: Props) {
   // Archived records are only offered if this transaction already uses them
   const usableAccounts = accounts.filter((a) => a.archivedAt === null || a.id === t?.account.id)
   const usableSources = sources
@@ -45,9 +55,7 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
   )
   // The category last chosen for each type, so switching Expense → Income →
   // Expense brings back what you had instead of a different category
-  const [chosenByType, setChosenByType] = useState<Partial<Record<Transaction['type'], string>>>(
-    {},
-  )
+  const [chosenByType, setChosenByType] = useState<Partial<Record<Transaction['type'], string>>>({})
   const [sourceId, setSourceId] = useState(t?.incomeSource?.id ?? '')
   const [notes, setNotes] = useState(t?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -92,7 +100,9 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
   if (usableAccounts.length === 0) {
     return (
       <Modal title="Add transaction" onClose={onClose}>
-        <p className="transaction-form__hint">Add an account first, so there's somewhere for the money to go.</p>
+        <p className="transaction-form__hint">
+          Add an account first, so there's somewhere for the money to go.
+        </p>
       </Modal>
     )
   }
@@ -232,6 +242,12 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
             {t ? 'Save changes' : 'Add transaction'}
           </button>
         </div>
+
+        {t && onDelete && (
+          <button type="button" className="transaction-form__delete" onClick={onDelete}>
+            <Trash2 size={16} aria-hidden /> Delete transaction
+          </button>
+        )}
       </form>
     </Modal>
   )
