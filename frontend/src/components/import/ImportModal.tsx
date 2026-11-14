@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { FileUp } from 'lucide-react'
 import Modal from '../Modal'
 import { MAX_FILE_MB, readCsv } from '../../lib/csv'
+import { detectColumns, detectHeaderRow, readRow, type Mapping } from '../../lib/import/detect'
+import { detectDateFormat } from '../../lib/import/parse'
+import ColumnMatcher from './ColumnMatcher'
+import ReadPreview from './ReadPreview'
 import './ImportModal.css'
 
 type Props = {
@@ -10,9 +14,12 @@ type Props = {
 
 const PREVIEW_ROWS = 5
 
-// Step-by-step import. Step 1: choose a CSV and say which row has the headings.
-// (Matching columns, names and the final preview come in the next steps.)
+// Step-by-step import. Step 1: choose a CSV and confirm which row has the
+// headings. Step 2: confirm which column is which. (Matching names and the
+// final preview come next.)
 function ImportModal({ onClose }: Props) {
+  const [step, setStep] = useState<'file' | 'columns'>('file')
+  const [mapping, setMapping] = useState<Mapping | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [rows, setRows] = useState<string[][] | null>(null)
   const [headerRow, setHeaderRow] = useState(0) // index into rows
@@ -25,7 +32,7 @@ function ImportModal({ onClose }: Props) {
       const read = await readCsv(file)
       setRows(read)
       setFileName(file.name)
-      setHeaderRow(0)
+      setHeaderRow(detectHeaderRow(read)) // usually right; the person can change it
     } catch (err) {
       setRows(null)
       setFileName(null)
@@ -36,10 +43,56 @@ function ImportModal({ onClose }: Props) {
   const headers = rows?.[headerRow] ?? []
   const dataRows = rows ? rows.slice(headerRow + 1) : []
   // Some exports put a title or account number above the real headings
-  const headerChoices = rows ? rows.slice(0, Math.min(rows.length, 10)) : []
+  const headerChoices = rows ? rows.slice(0, Math.min(rows.length, 15)) : []
+
+  // Moving on suggests a match for every column, which the person then checks
+  function goToColumns() {
+    setMapping(detectColumns(headers, dataRows))
+    setStep('columns')
+  }
+
+  const ambiguousDates =
+    mapping?.date != null && detectDateFormat(dataRows.map((r) => r[mapping.date!] ?? '')).ambiguous
+  const read = mapping ? dataRows.map((row) => readRow(row, mapping)) : []
+
+  if (step === 'columns' && mapping) {
+    return (
+      <Modal
+        title="Import transactions"
+        badge={<p className="import__step">Step 2 of 4 · Match columns</p>}
+        variant="large"
+        onClose={onClose}
+      >
+        <p className="import__intro">
+          These were matched automatically. Check them against the preview below and fix anything
+          that's wrong.
+        </p>
+        <ColumnMatcher
+          headers={headers}
+          mapping={mapping}
+          ambiguousDates={ambiguousDates}
+          onChange={setMapping}
+        />
+        <ReadPreview results={read} />
+        <div className="modal-actions">
+          <button type="button" className="btn btn--secondary" onClick={() => setStep('file')}>
+            Back
+          </button>
+          <button type="button" className="btn btn--primary" disabled>
+            Next: match names
+          </button>
+        </div>
+      </Modal>
+    )
+  }
 
   return (
-    <Modal title="Import transactions" variant="large" onClose={onClose}>
+    <Modal
+      title="Import transactions"
+      badge={<p className="import__step">Step 1 of 4 · Choose a file</p>}
+      variant="large"
+      onClose={onClose}
+    >
       <p className="import__intro">
         Choose a CSV file. Your file is read here in your browser; only the transactions you import
         are sent to Nayad. Excel and most banks can export CSV (in Excel: File → Save As → CSV).
@@ -113,7 +166,12 @@ function ImportModal({ onClose }: Props) {
         <button type="button" className="btn btn--secondary" onClick={onClose}>
           Cancel
         </button>
-        <button type="button" className="btn btn--primary" disabled>
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={!rows || dataRows.length === 0}
+          onClick={goToColumns}
+        >
           Next: match columns
         </button>
       </div>

@@ -68,3 +68,28 @@
 
 .import__table tr + tr td,
 .import__table tbody tr:first-child td { border-top: 1px solid var(--border); }
+
+.import__step {
+  margin: -10px 0 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Step 2 */
+.column-matcher__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 14px;
+}
+
+.column-matcher__hint {
+  font-size: 13px;
+  color: #b4443e;
+}
+
+.import__table td.is-income { color: var(--forest); }
+
+.import__table tr.is-skipped td {
+  color: var(--text-muted);
+  font-style: italic;
+}
