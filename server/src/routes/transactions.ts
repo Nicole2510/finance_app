@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
-import { Prisma, type Transaction } from "@prisma/client";
+import {
+  Prisma,
+  type Account,
+  type Category,
+  type IncomeSource,
+  type Transaction,
+} from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
@@ -11,7 +17,7 @@ export const transactionsRouter = Router();
 transactionsRouter.use(requireUser);
 
 // Validate transaction details before saving, ensuring positive amounts and optional notes.
-const createSchema = z.strictObject({
+export const createSchema = z.strictObject({
   type: z.enum(["INCOME", "EXPENSE"]),
   amount: moneySchema.refine((value) => Number(value) > 0, "amount must be above zero"),
   date: dateSchema,
@@ -71,63 +77,71 @@ function monthRange(month: string) {
   };
 }
 
-type References = Pick<
+export type References = Pick<
   z.infer<typeof createSchema>,
   "type" | "date" | "accountId" | "categoryId" | "incomeSourceId"
 >;
 
 type Kept = Pick<Transaction, "accountId" | "categoryId" | "incomeSourceId">;
 
-// Checks that everything a transaction points to belongs to this user, is still
-// active, and fits together. Someone else's record gets the same message as a
-// missing one, so this can't be used to discover what other users have.
+type Found = {
+  account: Account | null;
+  category: Category | null;
+  source: IncomeSource | null;
+};
+
+// The rules a transaction's account, category and income source must follow.
+// Returns what's wrong, or null if it's fine. Kept apart from loading so the
+// importer can check thousands of rows against records it loaded once.
 // When editing, `kept` is the transaction as it was: records it already used
 // may have been archived since, and that's fine, so old transactions stay editable.
-async function assertValidReferences(userId: string, data: References, kept?: Kept) {
-  const activeUnless = (id: string, keptId: string | null | undefined) =>
-    id === keptId ? {} : { archivedAt: null };
+export function checkReferences(data: References, found: Found, kept?: Kept): string | null {
+  const usable = <T extends { id: string; archivedAt: Date | null }>(
+    record: T | null,
+    keptId: string | null | undefined,
+  ) => (record && (record.archivedAt === null || record.id === keptId) ? record : null);
 
-  const [account, category, source] = await Promise.all([
-    prisma.account.findFirst({
-      where: { id: data.accountId, userId, ...activeUnless(data.accountId, kept?.accountId) },
-    }),
-    prisma.category.findFirst({
-      where: { id: data.categoryId, userId, ...activeUnless(data.categoryId, kept?.categoryId) },
-    }),
-    data.incomeSourceId
-      ? prisma.incomeSource.findFirst({
-          where: {
-            id: data.incomeSourceId,
-            userId,
-            ...activeUnless(data.incomeSourceId, kept?.incomeSourceId),
-          },
-        })
-      : null,
-  ]);
+  const account = usable(found.account, kept?.accountId);
+  const category = usable(found.category, kept?.categoryId);
+  const source = usable(found.source, kept?.incomeSourceId);
 
-  if (!account) throw new HttpError(400, "Choose an active account");
-  if (!category) throw new HttpError(400, "Choose an active category");
+  if (!account) return "Choose an active account";
+  if (!category) return "Choose an active category";
 
   if ((data.type === "INCOME") !== (category.group === "INCOME")) {
-    throw new HttpError(400, "That category doesn't match this type of transaction");
+    return "That category doesn't match this type of transaction";
   }
 
   if (data.incomeSourceId) {
-    if (data.type !== "INCOME") {
-      throw new HttpError(400, "Only income can have an income source");
-    }
-    if (!source) throw new HttpError(400, "Choose an active income source");
+    if (data.type !== "INCOME") return "Only income can have an income source";
+    if (!source) return "Choose an active income source";
   }
 
   // Earlier days are already included in the opening balance
   if (new Date(data.date) < account.openingDate) {
-    throw new HttpError(400, "The date can't be before the account's opening date");
+    return "The date can't be before the account's opening date";
   }
+  return null;
+}
+
+// Loads what a transaction points to (only this user's records, so someone
+// else's gets the same message as a missing one), then checks the rules
+async function assertValidReferences(userId: string, data: References, kept?: Kept) {
+  const [account, category, source] = await Promise.all([
+    prisma.account.findFirst({ where: { id: data.accountId, userId } }),
+    prisma.category.findFirst({ where: { id: data.categoryId, userId } }),
+    data.incomeSourceId
+      ? prisma.incomeSource.findFirst({ where: { id: data.incomeSourceId, userId } })
+      : null,
+  ]);
+
+  const problem = checkReferences(data, { account, category, source }, kept);
+  if (problem) throw new HttpError(400, problem);
 }
 
 // Marks accounts as updated now. Called alongside every change to their
 // transactions, so an account's "updated" time reflects its latest activity.
-function touchAccounts(userId: string, accountIds: string[]) {
+export function touchAccounts(userId: string, accountIds: string[]) {
   return prisma.account.updateMany({
     where: { id: { in: accountIds }, userId },
     data: { updatedAt: new Date() },

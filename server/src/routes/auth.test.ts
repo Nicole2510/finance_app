@@ -28,6 +28,7 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/accounts/:account/reconcile"],
   ["get", "/api/transactions"],
   ["post", "/api/transactions"],
+  ["post", "/api/transactions/import"],
   ["patch", "/api/transactions/:transaction"],
   ["delete", "/api/transactions/:transaction"],
 ];
