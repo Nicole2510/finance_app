@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, CalendarDays } from 'lucide-react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { CalendarDays } from 'lucide-react'
 import { formatDate } from '../lib/dates'
 import { useDismiss } from '../lib/useDismiss'
 import './DatePicker.css'
@@ -11,7 +11,11 @@ type Props = {
   max?: string // latest selectable day, "YYYY-MM-DD"
 }
 
-const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+
+const MONTHS = Array.from({ length: 12 }, (_, month) =>
+  new Date(2000, month, 1).toLocaleDateString('en-CA', { month: 'long' }),
+)
 
 // Dates are handled as "YYYY-MM-DD" strings and plain numbers, never through
 // time zones, so a picked day can't shift by one
@@ -39,28 +43,80 @@ function daysFor(year: number, month: number) {
   })
 }
 
-const monthTitle = (year: number, month: number) =>
-  new Date(year, month, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
-
-// A date field that opens a Nayad-styled month calendar below it
+// A date field that drops down a calendar. Clicking a day only highlights it;
+// Confirm applies it, and Close, Escape or clicking outside leave the date as it was.
 function DatePicker({ value, onChange, min, max }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+  const fieldRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(() => parse(value)) // which month is showing
+  const [draft, setDraft] = useState(value) // highlighted day, not saved until Confirm
   useDismiss(ref, open, () => setOpen(false))
 
-  const maxMonth = max ? parse(max) : null
-  const atMaxMonth = maxMonth && view.year === maxMonth.year && view.month === maxMonth.month
-  const minMonth = min ? parse(min) : null
-  const atMinMonth = minMonth && view.year === minMonth.year && view.month === minMonth.month
+  // The calendar floats (position: fixed) so it never stretches the form.
+  // It drops down from the field, or opens upwards if there's no room below,
+  // with a little pointer aimed at the field. It's placed by setting its style
+  // directly: this is measuring the page, not app data, so it doesn't need
+  // React state. Runs again on scroll and resize.
+  useLayoutEffect(() => {
+    if (!open) return
 
-  function shiftMonth(by: number) {
-    const d = new Date(view.year, view.month + by, 1)
-    setView({ year: d.getFullYear(), month: d.getMonth(), day: 1 })
+    function place() {
+      const field = fieldRef.current?.getBoundingClientRect()
+      const panel = panelRef.current
+      if (!field || !panel) return
+      const gap = 12
+      const edge = 8 // keep this far from the window's edges
+
+      const fitsBelow = field.bottom + gap + panel.offsetHeight <= window.innerHeight - edge
+      const top = fitsBelow ? field.bottom + gap : field.top - gap - panel.offsetHeight
+      const left = Math.max(edge, Math.min(field.left, window.innerWidth - panel.offsetWidth - edge))
+
+      panel.style.top = `${Math.max(edge, top)}px`
+      panel.style.left = `${left}px`
+      panel.style.setProperty('--pointer-x', `${field.left + 28 - left}px`)
+      panel.classList.toggle('is-above', !fitsBelow)
+    }
+
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true) // true: also when the modal scrolls
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [open])
+
+  const today = new Date()
+  const minDate = min ? parse(min) : null
+  const maxDate = max ? parse(max) : null
+  // Years to offer: from the earliest allowed (or 20 years back) to the latest
+  const firstYear = Math.min(minDate?.year ?? today.getFullYear() - 20, view.year)
+  const lastYear = Math.max(maxDate?.year ?? today.getFullYear() + 1, view.year)
+  const years = Array.from({ length: lastYear - firstYear + 1 }, (_, i) => lastYear - i)
+
+  const monthAllowed = (year: number, month: number) =>
+    !(minDate && (year < minDate.year || (year === minDate.year && month < minDate.month))) &&
+    !(maxDate && (year > maxDate.year || (year === maxDate.year && month > maxDate.month)))
+
+  // Changing the year can land on a month that isn't allowed (e.g. a future one),
+  // so move to the nearest allowed month
+  function showYear(year: number) {
+    let month = view.month
+    if (maxDate && year === maxDate.year) month = Math.min(month, maxDate.month)
+    if (minDate && year === minDate.year) month = Math.max(month, minDate.month)
+    setView({ year, month, day: 1 })
   }
 
-  function pick(key: string) {
-    onChange(key)
+  function highlight(key: string) {
+    setDraft(key)
+    const { year, month } = parse(key)
+    if (month !== view.month) setView({ year, month, day: 1 }) // a greyed-out day from next door
+  }
+
+  function confirm() {
+    onChange(draft)
     setOpen(false)
   }
 
@@ -79,10 +135,14 @@ function DatePicker({ value, onChange, min, max }: Props) {
     >
       <button
         type="button"
+        ref={fieldRef}
         className="form-input date-picker__field"
         aria-expanded={open}
         onClick={() => {
-          if (!open) setView(parse(value))
+          if (!open) {
+            setView(parse(value))
+            setDraft(value)
+          }
           setOpen(!open)
         }}
       >
@@ -91,27 +151,32 @@ function DatePicker({ value, onChange, min, max }: Props) {
       </button>
 
       {open && (
-        <div className="date-picker__panel" role="group" aria-label="Choose a date">
+        <div ref={panelRef} className="date-picker__panel" role="group" aria-label="Choose a date">
           <div className="date-picker__header">
-            <span className="date-picker__title">{monthTitle(view.year, view.month)}</span>
-            <button
-              type="button"
-              className="date-picker__nav"
-              aria-label="Previous month"
-              disabled={!!atMinMonth}
-              onClick={() => shiftMonth(-1)}
+            <select
+              className="form-select date-picker__select"
+              aria-label="Month"
+              value={view.month}
+              onChange={(e) => setView({ ...view, month: Number(e.target.value) })}
             >
-              <ArrowLeft size={20} />
-            </button>
-            <button
-              type="button"
-              className="date-picker__nav"
-              aria-label="Next month"
-              disabled={!!atMaxMonth}
-              onClick={() => shiftMonth(1)}
+              {MONTHS.map((name, month) => (
+                <option key={name} value={month} disabled={!monthAllowed(view.year, month)}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="form-select date-picker__select"
+              aria-label="Year"
+              value={view.year}
+              onChange={(e) => showYear(Number(e.target.value))}
             >
-              <ArrowRight size={20} />
-            </button>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="date-picker__grid">
@@ -124,16 +189,25 @@ function DatePicker({ value, onChange, min, max }: Props) {
               <button
                 key={key}
                 type="button"
-                className={`date-picker__day${inMonth ? '' : ' is-outside'}${key === value ? ' is-selected' : ''}`}
+                className={`date-picker__day${inMonth ? '' : ' is-outside'}${key === draft ? ' is-selected' : ''}`}
                 aria-label={formatDate(key)}
-                aria-pressed={key === value}
+                aria-pressed={key === draft}
                 // String comparison works because "YYYY-MM-DD" sorts like a date
                 disabled={(!!max && key > max) || (!!min && key < min)}
-                onClick={() => pick(key)}
+                onClick={() => highlight(key)}
               >
-                {day}
+                {String(day).padStart(2, '0')}
               </button>
             ))}
+          </div>
+
+          <div className="date-picker__actions">
+            <button type="button" className="date-picker__close" onClick={() => setOpen(false)}>
+              Close
+            </button>
+            <button type="button" className="date-picker__confirm" onClick={confirm}>
+              Confirm
+            </button>
           </div>
         </div>
       )}

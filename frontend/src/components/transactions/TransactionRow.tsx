@@ -1,4 +1,6 @@
 import type { Transaction } from '../../lib/types'
+import { categoryGroups } from '../../lib/categoryGroups'
+import { dayLabel } from '../../lib/dates'
 import { formatMoney } from '../../lib/money'
 
 type Props = {
@@ -6,28 +8,52 @@ type Props = {
   onSelect: () => void
 }
 
-// One transaction: category, where it was paid from or into, and the amount.
-// The whole row is a button that opens it for editing.
+// One table row. Clicking it (or Enter / Space when focused) opens it for editing.
 function TransactionRow({ transaction: t, onSelect }: Props) {
   const isIncome = t.type === 'INCOME'
-  const details = [t.account.name, t.incomeSource?.name, t.notes].filter(Boolean).join(' · ')
+  const details = [t.incomeSource?.name, t.notes].filter(Boolean).join(' · ')
 
   return (
-    <li>
-      <button type="button" className="transaction-row" onClick={onSelect}>
-        <span className="transaction-row__emoji" aria-hidden>
-          {t.category.emoji ?? '·'}
+    <tr
+      className="transaction-row"
+      tabIndex={0}
+      aria-label={`Edit ${t.category.name}, ${formatMoney(t.amount)}`}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
+    >
+      <td className="transaction-row__date">{dayLabel(t.date)}</td>
+      <td className="transaction-row__category">
+        {/* Flex layout lives on an inner wrapper: a flex <td> stops behaving like a table cell */}
+        <div className="transaction-row__category-inner">
+          <span className="transaction-row__emoji" aria-hidden>
+            {t.category.emoji ?? '·'}
+          </span>
+          <span className="transaction-row__text">
+            <span className="transaction-row__name">{t.category.name}</span>
+            {details && <span className="transaction-row__details">{details}</span>}
+            {/* Phones hide the date and account columns, so show them here */}
+            <span className="transaction-row__phone-meta">
+              {dayLabel(t.date)} · {t.account.name}
+            </span>
+          </span>
+        </div>
+      </td>
+      <td className="transaction-row__group">
+        <span className={`group-pill group-pill--${t.category.group.toLowerCase()}`}>
+          {categoryGroups[t.category.group].label}
         </span>
-        <span className="transaction-row__text">
-          <span className="transaction-row__name">{t.category.name}</span>
-          <span className="transaction-row__details">{details}</span>
-        </span>
-        <span className={`transaction-row__amount${isIncome ? ' is-income' : ''}`}>
-          {isIncome ? '+' : '−'}
-          {formatMoney(t.amount)}
-        </span>
-      </button>
-    </li>
+      </td>
+      <td className="transaction-row__account">{t.account.name}</td>
+      <td className={`transaction-row__amount${isIncome ? ' is-income' : ''}`}>
+        {isIncome ? '+' : '−'}
+        {formatMoney(t.amount)}
+      </td>
+    </tr>
   )
 }
 

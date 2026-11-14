@@ -1,6 +1,7 @@
-import { ListFilter, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { accountTypes } from '../../lib/accountTypes'
 import type { AccountType } from '../../lib/types'
+import FilterSelect from '../FilterSelect'
 import './AccountFilters.css'
 
 export type TypeFilter = AccountType | 'ALL'
@@ -27,22 +28,18 @@ function AccountFilters({ search, type, onSearchChange, onTypeChange }: Props) {
         />
       </label>
 
-      {/* An invisible <select> covers the icon, so clicking it opens the native list */}
-      <label className={`account-filters__type${type === 'ALL' ? '' : ' is-active'}`}>
-        <ListFilter size={18} aria-hidden />
-        <select
-          value={type}
-          aria-label="Filter by account type"
-          onChange={(e) => onTypeChange(e.target.value as TypeFilter)}
-        >
-          <option value="ALL">All types</option>
-          {Object.entries(accountTypes).map(([id, { plural }]) => (
-            <option key={id} value={id}>
-              {plural}
-            </option>
-          ))}
-        </select>
-      </label>
+      <FilterSelect
+        label="Filter by account type"
+        value={type}
+        options={[
+          { value: 'ALL', label: 'All types' },
+          ...Object.entries(accountTypes).map(([id, { plural }]) => ({
+            value: id as AccountType,
+            label: plural,
+          })),
+        ]}
+        onChange={onTypeChange}
+      />
     </div>
   )
 }

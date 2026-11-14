@@ -2,8 +2,9 @@ import { useState } from 'react'
 import Modal from '../Modal'
 import DatePicker from '../DatePicker'
 import { categoriesFor } from '../../lib/categories'
+import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import { today } from '../../lib/dates'
-import type { Account, Category, CategoryGroup, IncomeSource, Transaction } from '../../lib/types'
+import type { Account, Category, IncomeSource, Transaction } from '../../lib/types'
 import './TransactionFormModal.css'
 
 // What the API expects
@@ -27,15 +28,6 @@ type Props = {
   onSubmit: (values: TransactionValues) => Promise<string | null>
 }
 
-const GROUP_LABELS: Record<CategoryGroup, string> = {
-  NEEDS: 'Needs',
-  WANTS: 'Wants',
-  SAVINGS: 'Savings',
-  DEBT: 'Debt',
-  INVESTMENTS: 'Investments',
-  INCOME: 'Income',
-}
-
 // Add / edit transaction popup
 function TransactionFormModal({ transaction: t, accounts, categories, sources, onClose, onSubmit }: Props) {
   // Archived records are only offered if this transaction already uses them
@@ -51,6 +43,11 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
   const [categoryId, setCategoryId] = useState(
     t?.category.id ?? categoriesFor('EXPENSE', categories)[0]?.id ?? '',
   )
+  // The category last chosen for each type, so switching Expense → Income →
+  // Expense brings back what you had instead of a different category
+  const [chosenByType, setChosenByType] = useState<Partial<Record<Transaction['type'], string>>>(
+    {},
+  )
   const [sourceId, setSourceId] = useState(t?.incomeSource?.id ?? '')
   const [notes, setNotes] = useState(t?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -60,10 +57,19 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
   const account = accounts.find((a) => a.id === accountId)
 
   // Switching type changes which categories fit, so pick one that does
+  // Switching type: remember this type's category, then restore the other
+  // type's (or pick its first category the first time you switch to it)
   function changeType(next: Transaction['type']) {
+    if (next === type) return
+    const chosen = { ...chosenByType, [type]: categoryId }
+    setChosenByType(chosen)
     setType(next)
+
     const options = categoriesFor(next, categories, t?.category.id)
-    if (!options.some((c) => c.id === categoryId)) setCategoryId(options[0]?.id ?? '')
+    const previous = chosen[next]
+    setCategoryId(
+      previous && options.some((c) => c.id === previous) ? previous : (options[0]?.id ?? ''),
+    )
   }
 
   async function submit(e: React.FormEvent) {
@@ -92,22 +98,35 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
   }
 
   return (
-    <Modal title={t ? 'Edit transaction' : 'Add transaction'} onClose={onClose}>
+    <Modal
+      title={t ? 'Edit transaction' : 'Add transaction'}
+      badge={
+        t && (
+          <p className={`transaction-form__type transaction-form__type--${type.toLowerCase()}`}>
+            {type === 'EXPENSE' ? 'Expense' : 'Income'}
+          </p>
+        )
+      }
+      onClose={onClose}
+    >
       <form onSubmit={submit}>
-        <div className="segmented" role="radiogroup" aria-label="Type">
-          {(['EXPENSE', 'INCOME'] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="radio"
-              aria-checked={type === option}
-              className={type === option ? 'is-selected' : undefined}
-              onClick={() => changeType(option)}
-            >
-              {option === 'EXPENSE' ? 'Expense' : 'Income'}
-            </button>
-          ))}
-        </div>
+        {/* Only new transactions choose a type; a saved one shows it in the header */}
+        {!t && (
+          <div className="segmented" role="radiogroup" aria-label="Type">
+            {(['EXPENSE', 'INCOME'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={type === option}
+                className={type === option ? 'is-selected' : undefined}
+                onClick={() => changeType(option)}
+              >
+                {option === 'EXPENSE' ? 'Expense' : 'Income'}
+              </button>
+            ))}
+          </div>
+        )}
 
         <label className="form-field">
           <span className="form-field__label">Amount</span>
@@ -148,11 +167,11 @@ function TransactionFormModal({ transaction: t, accounts, categories, sources, o
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
-            {(Object.keys(GROUP_LABELS) as CategoryGroup[]).map((group) => {
+            {GROUP_ORDER.map((group) => {
               const inGroup = categoryOptions.filter((c) => c.group === group)
               return (
                 inGroup.length > 0 && (
-                  <optgroup key={group} label={GROUP_LABELS[group]}>
+                  <optgroup key={group} label={categoryGroups[group].label}>
                     {inGroup.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.emoji ? `${c.emoji} ` : ''}

@@ -18,15 +18,32 @@
   backdrop-filter: blur(2px);
 }
 
-/* Scrolls inside itself if taller than the screen */
+/* Header on top, content under it. Only the content scrolls, so the
+   scrollbar starts below the header instead of running beside it. */
 .modal__body {
+  --pad-y: 28px;
+  --pad-x: 28px;
   position: relative;
+  display: flex;
+  flex-direction: column;
   max-height: calc(100dvh - 32px);
-  padding: 28px;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: var(--radius-lg);
   background: #fbf8f5;
   box-shadow: var(--shadow-soft);
+}
+
+.modal__header {
+  flex-shrink: 0;
+  padding: var(--pad-y) var(--pad-x) 0;
+}
+
+/* min-height: 0 lets it shrink below its content's height, so it can scroll.
+   A little top padding keeps input focus rings from being clipped. */
+.modal__content {
+  min-height: 0;
+  padding: 4px var(--pad-x) var(--pad-y);
+  overflow-y: auto;
 }
 
 .modal--dialog {
@@ -75,7 +92,8 @@
 /* Phones: a bit less padding so content has room */
 @media (max-width: 640px) {
   .modal__body {
-    padding: 24px 18px;
+    --pad-y: 24px;
+    --pad-x: 18px;
     border-radius: var(--radius-md);
   }
 
@@ -119,6 +137,18 @@
   background: var(--surface);
   font: inherit;
   color: var(--espresso);
+}
+
+/* Dropdowns with a properly centred, inset arrow: the browser's own arrow
+   sits against the edge and can't be moved, so it's hidden and drawn instead */
+.form-select,
+.transaction-filters__account {
+  padding-right: 44px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%232f2724' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
 }
 
 .form-input:focus {

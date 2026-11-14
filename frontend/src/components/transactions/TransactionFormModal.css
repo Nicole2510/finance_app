@@ -34,3 +34,17 @@
 .transaction-form__hint {
   color: var(--text-muted);
 }
+
+/* Type label shown when editing */
+.transaction-form__type {
+  display: inline-block;
+  padding: 4px 12px;
+  margin: -8px 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--espresso-soft);
+}
+
+.transaction-form__type--expense { background: var(--cream); }
+.transaction-form__type--income { background: #e8e7f0; }

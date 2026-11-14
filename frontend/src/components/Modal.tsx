@@ -4,6 +4,7 @@ import './Modal.css'
 
 type Props = {
   title?: string
+  badge?: ReactNode // small label under the title, e.g. "Expense"
   onClose: () => void
   // Both are centred: "dialog" for forms, "wide" for longer lists
   variant?: 'dialog' | 'wide'
@@ -12,7 +13,7 @@ type Props = {
 
 // Popup built on the browser's <dialog>, which gives us Escape-to-close,
 // focus trapping and screen-reader support for free
-function Modal({ title, onClose, variant = 'dialog', children }: Props) {
+function Modal({ title, badge, onClose, variant = 'dialog', children }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -35,11 +36,15 @@ function Modal({ title, onClose, variant = 'dialog', children }: Props) {
       }}
     >
       <div className="modal__body">
-        <button type="button" className="modal__close" aria-label="Close" onClick={onClose}>
-          <X size={20} />
-        </button>
-        {title && <h2 className="modal__title">{title}</h2>}
-        {children}
+        {/* Stays put; only the content below it scrolls */}
+        <div className="modal__header">
+          <button type="button" className="modal__close" aria-label="Close" onClick={onClose}>
+            <X size={20} />
+          </button>
+          {title && <h2 className="modal__title">{title}</h2>}
+          {badge}
+        </div>
+        <div className="modal__content">{children}</div>
       </div>
     </dialog>
   )

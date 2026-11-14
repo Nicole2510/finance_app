@@ -1,33 +1,33 @@
 import type { Transaction } from '../../lib/types'
-import { dayLabel } from '../../lib/dates'
 import TransactionRow from './TransactionRow'
 import './TransactionList.css'
 
 type Props = {
-  transactions: Transaction[]
+  transactions: Transaction[] // newest first, as the API sends them
   onSelect: (transaction: Transaction) => void
 }
 
-// Transactions grouped under a heading for each day (they arrive newest first)
+// Transactions as a table (stacked rows on phones)
 function TransactionList({ transactions, onSelect }: Props) {
-  const days = new Map<string, Transaction[]>()
-  for (const t of transactions) {
-    days.set(t.date, [...(days.get(t.date) ?? []), t])
-  }
-
   return (
-    <div className="transaction-list">
-      {[...days].map(([date, onDay]) => (
-        <section key={date} className="transaction-list__day">
-          <h2 className="transaction-list__date">{dayLabel(date)}</h2>
-          <ul>
-            {onDay.map((t) => (
-              <TransactionRow key={t.id} transaction={t} onSelect={() => onSelect(t)} />
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+    <table className="transaction-table">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Category</th>
+          <th scope="col">Group</th>
+          <th scope="col">Account</th>
+          <th scope="col" className="transaction-table__amount">
+            Amount
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {transactions.map((t) => (
+          <TransactionRow key={t.id} transaction={t} onSelect={() => onSelect(t)} />
+        ))}
+      </tbody>
+    </table>
   )
 }
 
