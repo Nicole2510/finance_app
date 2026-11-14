@@ -1,10 +1,11 @@
 import { Link } from 'react-router' // Users can navigate between pages without full page reloads
 import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trash2 } from 'lucide-react' // Icons for the "back" link and the menu actions
-import type { Account } from '../../lib/types' 
+import type { Account, Transaction } from '../../lib/types'
 import { accountTypes } from '../../lib/accountTypes'
 import { balanceText } from '../../lib/accountBalance'
 import { daysAgo, formatDate } from '../../lib/dates'
 import ActionsMenu from '../ActionsMenu'
+import RecentTransactions from './RecentTransactions'
 import './AccountDetails.css'
 
 type Props = {
@@ -12,10 +13,17 @@ type Props = {
   onEdit: () => void
   onToggleArchive: () => void
   onDelete: () => void
+  recent: Transaction[] | null // latest transactions; null while loading
 }
 
 // Right panel: the selected account's balances and activity
-function AccountDetails({ account, onEdit, onToggleArchive, onDelete }: Props) {
+function AccountDetails({
+  account,
+  onEdit,
+  onToggleArchive,
+  onDelete,
+  recent,
+}: Props) {
   const archived = account.archivedAt !== null
   const { label, icon: Icon } = accountTypes[account.type]
 
@@ -80,10 +88,8 @@ function AccountDetails({ account, onEdit, onToggleArchive, onDelete }: Props) {
         </div>
       </dl>
 
-      <section className="account-details__activity">
-        <h3>Recent transactions</h3>
-        <p>Available when transactions are added.</p>
-      </section>
+      {/* key: a different account starts collapsed again */}
+      <RecentTransactions key={account.id} transactions={recent} />
     </article>
   )
 }

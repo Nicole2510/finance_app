@@ -25,6 +25,12 @@ const createSchema = z.strictObject({
 const updateSchema = createSchema.partial();
 
 const listSchema = z.object({
+  limit: z.coerce
+    .number()
+    .int("Limit must be a whole number")
+    .min(1, "Limit must be at least 1")
+    .max(50, "Limit cannot exceed 50")
+    .optional(),
   month: z
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
@@ -119,9 +125,18 @@ async function assertValidReferences(userId: string, data: References, kept?: Ke
   }
 }
 
+// Marks accounts as updated now. Called alongside every change to their
+// transactions, so an account's "updated" time reflects its latest activity.
+function touchAccounts(userId: string, accountIds: string[]) {
+  return prisma.account.updateMany({
+    where: { id: { in: accountIds }, userId },
+    data: { updatedAt: new Date() },
+  });
+}
+
 // GET /api/transactions?month=2026-10&accountId=...&categoryId=...
 transactionsRouter.get("/", async (req, res) => {
-  const { month, accountId, categoryId } = parseBody(listSchema, req.query);
+  const { month, accountId, categoryId, limit } = parseBody(listSchema, req.query);
 
   const transactions = await prisma.transaction.findMany({
     where: {
@@ -132,6 +147,7 @@ transactionsRouter.get("/", async (req, res) => {
     },
     include: related,
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    take: limit, // undefined means no limit
   });
 
   res.json(transactions.map(toJson));
@@ -142,10 +158,14 @@ transactionsRouter.post("/", async (req, res) => {
   const data = parseBody(createSchema, req.body);
   await assertValidReferences(userId, data);
 
-  const transaction = await prisma.transaction.create({
-    data: { ...data, date: new Date(data.date), userId },
-    include: related,
-  });
+  // Both happen or neither does
+  const [transaction] = await prisma.$transaction([
+    prisma.transaction.create({
+      data: { ...data, date: new Date(data.date), userId },
+      include: related,
+    }),
+    touchAccounts(userId, [data.accountId]),
+  ]);
   res.status(201).json(toJson(transaction));
 });
 
@@ -177,11 +197,15 @@ transactionsRouter.patch("/:id", async (req, res) => {
     existing,
   );
 
-  const transaction = await prisma.transaction.update({
-    where: { id: existing.id },
-    data: { ...changes, ...(changes.date ? { date: new Date(changes.date) } : {}) },
-    include: related,
-  });
+  // Moving it to another account counts as activity on both
+  const [transaction] = await prisma.$transaction([
+    prisma.transaction.update({
+      where: { id: existing.id },
+      data: { ...changes, ...(changes.date ? { date: new Date(changes.date) } : {}) },
+      include: related,
+    }),
+    touchAccounts(userId, [existing.accountId, changes.accountId ?? existing.accountId]),
+  ]);
   res.json(toJson(transaction));
 });
 
@@ -191,9 +215,10 @@ transactionsRouter.delete("/:id", async (req, res) => {
   const transaction = await findOwned(req.user!.id, req.params.id);
 
   // Delete the transaction from the database
-  await prisma.transaction.delete({ 
-    where: { id: transaction.id },
-  });
+  await prisma.$transaction([
+    prisma.transaction.delete({ where: { id: transaction.id } }),
+    touchAccounts(req.user!.id, [transaction.accountId]),
+  ]);
 
   // Respond with 204 No Content to indicate successful deletion
   res.status(204).end();

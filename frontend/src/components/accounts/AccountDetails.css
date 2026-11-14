@@ -123,6 +123,72 @@
   color: var(--text-muted);
 }
 
+.recent-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* "View all": the full list scrolls inside the panel, at about the height of
+   the 10 rows shown before expanding, so the panel doesn't jump in size */
+.recent-list.is-expanded {
+  max-height: 600px;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.recent-list__more {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.recent-list__note {
+  margin-top: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.recent-list__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.recent-list__item + .recent-list__item { border-top: 1px solid var(--border); }
+
+.recent-list__emoji {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+}
+
+.recent-list__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recent-list__name { font-weight: 500; }
+
+.recent-list__date {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.recent-list__amount {
+  flex-shrink: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-list__amount.is-income { color: var(--forest); }
+
 @media (max-width: 980px) {
   .account-details__back { display: inline-flex; }
 }

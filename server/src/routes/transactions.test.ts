@@ -558,3 +558,94 @@ describe("editing and deleting are private", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("recent transactions", () => {
+  it("sends back only the newest ones when given a limit", async () => {
+    const { account, groceries } = await setUp(alice);
+    for (const day of ["05", "06", "07"]) {
+      await alice.post("/api/transactions", {
+        type: "EXPENSE",
+        amount: "10",
+        date: `2026-10-${day}`,
+        accountId: account.id,
+        categoryId: groceries,
+      });
+    }
+
+    const res = await alice.get(`/api/transactions?accountId=${account.id}&limit=2`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((t: { date: string }) => t.date)).toEqual(["2026-10-07", "2026-10-06"]);
+  });
+
+  it.each(["0", "-1", "51", "2.5", "abc"])("rejects limit=%s", async (limit) => {
+    const res = await alice.get(`/api/transactions?limit=${limit}`);
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("an account's updated time follows its activity", () => {
+  const longAgo = new Date("2026-01-01T00:00:00Z");
+
+  // Pushes accounts' updatedAt into the past so any change is clearly visible
+  async function age(...ids: string[]) {
+    await prisma.account.updateMany({ where: { id: { in: ids } }, data: { updatedAt: longAgo } });
+  }
+
+  async function updatedAtOf(id: string) {
+    const account = await prisma.account.findUniqueOrThrow({ where: { id } });
+    return account.updatedAt.getTime();
+  }
+
+  it("moves forward when a transaction is added", async () => {
+    const { account, groceries } = await setUp(alice);
+    await age(account.id);
+
+    await addExpense(alice, account.id, groceries);
+
+    expect(await updatedAtOf(account.id)).toBeGreaterThan(longAgo.getTime());
+  });
+
+  it("moves forward when a transaction is deleted", async () => {
+    const { account, groceries } = await setUp(alice);
+    const tx = await addExpense(alice, account.id, groceries);
+    await age(account.id);
+
+    await alice.delete(`/api/transactions/${tx.id}`);
+
+    expect(await updatedAtOf(account.id)).toBeGreaterThan(longAgo.getTime());
+  });
+
+  it("moves forward on both accounts when a transaction moves between them", async () => {
+    const { account, groceries } = await setUp(alice);
+    const { body: other } = await alice.post("/api/accounts", {
+      name: "Birch Savings",
+      type: "SAVINGS",
+      openingBalance: "0",
+      openingDate: "2026-10-01",
+    });
+    const tx = await addExpense(alice, account.id, groceries);
+    await age(account.id, other.id);
+
+    await alice.patch(`/api/transactions/${tx.id}`, { accountId: other.id });
+
+    expect(await updatedAtOf(account.id)).toBeGreaterThan(longAgo.getTime());
+    expect(await updatedAtOf(other.id)).toBeGreaterThan(longAgo.getTime());
+  });
+
+  it("isn't changed by a refused transaction", async () => {
+    const { account, groceries } = await setUp(alice);
+    await age(account.id);
+
+    await alice.post("/api/transactions", {
+      type: "EXPENSE",
+      amount: "0",
+      date: "2026-10-18",
+      accountId: account.id,
+      categoryId: groceries,
+    });
+
+    expect(await updatedAtOf(account.id)).toBe(longAgo.getTime());
+  });
+});

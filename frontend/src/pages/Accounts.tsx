@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
-import type { Account, AccountType } from '../lib/types'
+import type { Account, AccountType, Transaction } from '../lib/types'
 import { accountTypes } from '../lib/accountTypes'
 import DeleteModal from '../components/DeleteModal'
 import PageHeader from '../components/PageHeader'
 import AccountDetails from '../components/accounts/AccountDetails'
 import AccountFormModal, { type AccountValues } from '../components/accounts/AccountFormModal'
 import AccountList from '../components/accounts/AccountList'
+import { RECENT_MAX } from '../components/accounts/RecentTransactions'
 import type { TypeFilter } from '../components/accounts/AccountFilters'
 import './Page.css'
 import './Accounts.css'
@@ -33,6 +34,24 @@ function Accounts() {
       .then(setAccounts)
       .catch((err: Error) => setLoadError(err.message))
   }, [apiFetch])
+
+  // The selected account's latest transactions (up to 50, in one request),
+  // stored with the account they're for so switching accounts never shows the
+  // previous one's list
+  const [recent, setRecent] = useState<{ accountId: string; transactions: Transaction[] } | null>(
+    null,
+  )
+
+  useEffect(() => {
+    if (!id) return
+    let stale = false // ignore the answer if another account is chosen first
+    apiFetch<Transaction[]>(`/api/transactions?accountId=${id}&limit=${RECENT_MAX}`)
+      .then((transactions) => !stale && setRecent({ accountId: id, transactions }))
+      .catch(() => !stale && setRecent({ accountId: id, transactions: [] }))
+    return () => {
+      stale = true
+    }
+  }, [apiFetch, id])
 
   // Saves a new account and opens it; returns an error message if it fails
   async function addAccount(values: AccountValues) {
@@ -104,7 +123,11 @@ function Accounts() {
   return (
     <div className="page accounts">
       <PageHeader title="Accounts">
-        <button type="button" className="btn btn--primary accounts__add" onClick={() => setAdding(true)}>
+        <button
+          type="button"
+          className="btn btn--primary accounts__add"
+          onClick={() => setAdding(true)}
+        >
           <Plus size={18} /> Add account
         </button>
       </PageHeader>
@@ -140,6 +163,7 @@ function Accounts() {
                 onEdit={() => setEditing(true)}
                 onToggleArchive={() => setArchived(selected.archivedAt === null)}
                 onDelete={() => setDeleting(true)}
+                recent={recent?.accountId === selected.id ? recent.transactions : null}
               />
             ) : (
               <p className="accounts__empty">
