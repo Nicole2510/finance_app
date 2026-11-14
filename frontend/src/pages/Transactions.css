@@ -25,3 +25,8 @@
   gap: 8px;
   padding: 9px 16px;
 }
+
+.transactions__actions {
+  display: flex;
+  gap: 10px;
+}

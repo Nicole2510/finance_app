@@ -6,8 +6,8 @@ type Props = {
   title?: string
   badge?: ReactNode // small label under the title, e.g. "Expense"
   onClose: () => void
-  // Both are centred: "dialog" for forms, "wide" for longer lists
-  variant?: 'dialog' | 'wide'
+  // All are centred: "dialog" for forms, "wide" for longer lists, "large" for tables
+  variant?: 'dialog' | 'wide' | 'large'
   children: ReactNode
 }
 
