@@ -1,4 +1,4 @@
-import type { Category, Transaction } from './types'
+import type { Category, EntryType } from './types'
 
 // ───────────────────────────────────────────────────────────────────────────
 // 🧑‍💻 PRACTICE: which categories the transaction form offers for a type.
@@ -15,7 +15,7 @@ import type { Category, Transaction } from './types'
 // Hints: categories.filter(...)  and  [...list].sort((a, b) => a.name.localeCompare(b.name))
 // ───────────────────────────────────────────────────────────────────────────
 export function categoriesFor(
-  type: Transaction['type'],
+  type: EntryType,
   categories: Category[], // array containing all categories
   keepId?: string, // optional category id to keep even if archived
 ): Category[] {

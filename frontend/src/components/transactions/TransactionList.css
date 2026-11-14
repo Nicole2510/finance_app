@@ -105,6 +105,7 @@
 .group-pill--debt { background: #f3e9df; }
 .group-pill--investments { background: #e3eaec; }
 .group-pill--income { background: #e8e7f0; }
+.group-pill--adjustment { background: var(--sand); }
 
 /* Phones: no header, and each row becomes category on the left, amount on
    the right, with the date and account moved under the category name */

@@ -203,3 +203,23 @@
     text-align: left;
   }
 }
+
+/* Reconcile popup */
+.reconcile__current {
+  margin-bottom: 18px;
+  color: var(--text-muted);
+}
+
+.reconcile__current strong {
+  color: var(--espresso);
+  font-variant-numeric: tabular-nums;
+}
+
+.reconcile__preview {
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  font-size: 14px;
+  color: var(--espresso-soft);
+}

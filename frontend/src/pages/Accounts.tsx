@@ -4,11 +4,13 @@ import { Plus } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
 import type { Account, AccountType, Transaction } from '../lib/types'
 import { accountTypes } from '../lib/accountTypes'
+import { today } from '../lib/dates'
 import DeleteModal from '../components/DeleteModal'
 import PageHeader from '../components/PageHeader'
 import AccountDetails from '../components/accounts/AccountDetails'
 import AccountFormModal, { type AccountValues } from '../components/accounts/AccountFormModal'
 import AccountList from '../components/accounts/AccountList'
+import ReconcileModal from '../components/accounts/ReconcileModal'
 import { RECENT_MAX } from '../components/accounts/RecentTransactions'
 import type { TypeFilter } from '../components/accounts/AccountFilters'
 import './Page.css'
@@ -25,6 +27,9 @@ function Accounts() {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [reconciling, setReconciling] = useState(false)
+  // Bumped after reconciling, so the recent list loads again with the adjustment
+  const [recentVersion, setRecentVersion] = useState(0)
   const [actionError, setActionError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL')
@@ -51,7 +56,7 @@ function Accounts() {
     return () => {
       stale = true
     }
-  }, [apiFetch, id])
+  }, [apiFetch, id, recentVersion])
 
   // Saves a new account and opens it; returns an error message if it fails
   async function addAccount(values: AccountValues) {
@@ -76,6 +81,21 @@ function Accounts() {
         body: JSON.stringify(values),
       })
       setAccounts((list) => (list ?? []).map((a) => (a.id === updated.id ? updated : a)))
+      return null
+    } catch (err) {
+      return (err as Error).message
+    }
+  }
+
+  // Records an adjustment so the balance matches the bank; returns an error message if it fails
+  async function reconcileAccount(actualBalance: string) {
+    try {
+      const { account } = await apiFetch<{ adjustment: string; account: Account }>(
+        `/api/accounts/${id}/reconcile`,
+        { method: 'POST', body: JSON.stringify({ actualBalance, date: today() }) },
+      )
+      setAccounts((list) => (list ?? []).map((a) => (a.id === account.id ? account : a)))
+      setRecentVersion((v) => v + 1)
       return null
     } catch (err) {
       return (err as Error).message
@@ -163,6 +183,7 @@ function Accounts() {
                 onEdit={() => setEditing(true)}
                 onToggleArchive={() => setArchived(selected.archivedAt === null)}
                 onDelete={() => setDeleting(true)}
+                onReconcile={() => setReconciling(true)}
                 recent={recent?.accountId === selected.id ? recent.transactions : null}
               />
             ) : (
@@ -182,6 +203,13 @@ function Accounts() {
           onClose={() => setDeleting(false)}
           onDelete={deleteAccount}
           onArchive={() => setArchived(true)}
+        />
+      )}
+      {reconciling && selected && (
+        <ReconcileModal
+          account={selected}
+          onClose={() => setReconciling(false)}
+          onSubmit={reconcileAccount}
         />
       )}
       {editing && selected && (

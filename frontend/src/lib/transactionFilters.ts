@@ -1,9 +1,9 @@
-import type { Transaction } from './types'
+import type { EntryType } from './types'
 
 // What the Transactions page is filtered by
 export type Filters = {
   search: string
-  type: Transaction['type'] | 'ALL'
+  type: EntryType | 'ALL'
   accountId: string // 'ALL' or an account id
 }
 

@@ -34,14 +34,19 @@ export type Account = {
   updatedAt: string
 }
 
+// Income and expenses are entered by hand; adjustments come from reconciling
+export type EntryType = 'INCOME' | 'EXPENSE'
+
 // A transaction comes with the names of what it belongs to, so lists can show them
 export type Transaction = {
   id: string
-  type: 'INCOME' | 'EXPENSE'
-  amount: string // always positive; type gives the direction
+  type: EntryType | 'ADJUSTMENT'
+  // Positive for income and expenses (type gives the direction);
+  // adjustments carry their own sign, e.g. "-3.15"
+  amount: string
   date: string // "YYYY-MM-DD"
   notes: string | null
   account: { id: string; name: string }
-  category: { id: string; name: string; emoji: string | null; group: CategoryGroup }
+  category: { id: string; name: string; emoji: string | null; group: CategoryGroup } | null
   incomeSource: { id: string; name: string } | null
 }

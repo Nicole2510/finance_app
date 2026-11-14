@@ -1,5 +1,5 @@
 import { Link } from 'react-router' // Users can navigate between pages without full page reloads
-import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trash2 } from 'lucide-react' // Icons for the "back" link and the menu actions
+import { Archive, ArchiveRestore, ArrowLeft, Pencil, Scale, Trash2 } from 'lucide-react' // Icons for the "back" link and the menu actions
 import type { Account, Transaction } from '../../lib/types'
 import { accountTypes } from '../../lib/accountTypes'
 import { balanceText } from '../../lib/accountBalance'
@@ -13,6 +13,7 @@ type Props = {
   onEdit: () => void
   onToggleArchive: () => void
   onDelete: () => void
+  onReconcile: () => void
   recent: Transaction[] | null // latest transactions; null while loading
 }
 
@@ -22,6 +23,7 @@ function AccountDetails({
   onEdit,
   onToggleArchive,
   onDelete,
+  onReconcile,
   recent,
 }: Props) {
   const archived = account.archivedAt !== null
@@ -60,6 +62,17 @@ function AccountDetails({
               icon: Pencil,
               onSelect: onEdit,
             },
+            // Archived accounts are read-only, so only active ones can be reconciled
+            ...(archived
+              ? []
+              : [
+                  {
+                    label: 'Reconcile balance',
+                    hint: 'Match the balance your bank shows',
+                    icon: Scale,
+                    onSelect: onReconcile,
+                  },
+                ]),
             {
               label: archived ? 'Restore account' : 'Archive account',
               hint: archived ? 'Show it in your accounts again' : 'Hide it while preserving history',

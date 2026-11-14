@@ -5,12 +5,12 @@ import DatePicker from '../DatePicker'
 import { categoriesFor } from '../../lib/categories'
 import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import { today } from '../../lib/dates'
-import type { Account, Category, IncomeSource, Transaction } from '../../lib/types'
+import type { Account, Category, EntryType, IncomeSource, Transaction } from '../../lib/types'
 import './TransactionFormModal.css'
 
 // What the API expects
 export type TransactionValues = {
-  type: Transaction['type']
+  type: EntryType
   amount: string
   date: string
   accountId: string
@@ -46,34 +46,36 @@ function TransactionFormModal({
     .filter((s) => s.archivedAt === null || s.id === t?.incomeSource?.id)
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  const [type, setType] = useState<Transaction['type']>(t?.type ?? 'EXPENSE')
+  const [type, setType] = useState<EntryType>(
+    t?.type === 'INCOME' ? 'INCOME' : 'EXPENSE', // the form never opens adjustments
+  )
   const [amount, setAmount] = useState(t?.amount ?? '')
   const [date, setDate] = useState(t?.date ?? today())
   const [accountId, setAccountId] = useState(t?.account.id ?? usableAccounts[0]?.id ?? '')
   const [categoryId, setCategoryId] = useState(
-    t?.category.id ?? categoriesFor('EXPENSE', categories)[0]?.id ?? '',
+    t?.category?.id ?? categoriesFor('EXPENSE', categories)[0]?.id ?? '',
   )
   // The category last chosen for each type, so switching Expense → Income →
   // Expense brings back what you had instead of a different category
-  const [chosenByType, setChosenByType] = useState<Partial<Record<Transaction['type'], string>>>({})
+  const [chosenByType, setChosenByType] = useState<Partial<Record<EntryType, string>>>({})
   const [sourceId, setSourceId] = useState(t?.incomeSource?.id ?? '')
   const [notes, setNotes] = useState(t?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const categoryOptions = categoriesFor(type, categories, t?.category.id)
+  const categoryOptions = categoriesFor(type, categories, t?.category?.id)
   const account = accounts.find((a) => a.id === accountId)
 
   // Switching type changes which categories fit, so pick one that does
   // Switching type: remember this type's category, then restore the other
   // type's (or pick its first category the first time you switch to it)
-  function changeType(next: Transaction['type']) {
+  function changeType(next: EntryType) {
     if (next === type) return
     const chosen = { ...chosenByType, [type]: categoryId }
     setChosenByType(chosen)
     setType(next)
 
-    const options = categoriesFor(next, categories, t?.category.id)
+    const options = categoriesFor(next, categories, t?.category?.id)
     const previous = chosen[next]
     setCategoryId(
       previous && options.some((c) => c.id === previous) ? previous : (options[0]?.id ?? ''),

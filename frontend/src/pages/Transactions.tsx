@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
 import { currentMonth, dayLabel, monthLabel } from '../lib/dates'
-import { formatMoney } from '../lib/money'
+import { describeTransaction } from '../lib/transactionDisplay'
 import { NO_FILTERS, type Filters } from '../lib/transactionFilters'
 import type { Account, Category, IncomeSource, Transaction } from '../lib/types'
 import DeleteModal from '../components/DeleteModal'
@@ -72,7 +72,7 @@ function Transactions() {
     (t) =>
       (filters.type === 'ALL' || t.type === filters.type) &&
       (filters.accountId === 'ALL' || t.account.id === filters.accountId) &&
-      [t.category.name, t.notes, t.account.name, t.incomeSource?.name].some((text) =>
+      [describeTransaction(t).name, t.notes, t.account.name, t.incomeSource?.name].some((text) =>
         text?.toLowerCase().includes(query),
       ),
   )
@@ -139,11 +139,21 @@ function Transactions() {
               onChange={setFilters}
             />
             {visible.length > 0 ? (
-              <TransactionList transactions={visible} onSelect={(t) => setForm({ transaction: t })} />
+              <TransactionList
+                transactions={visible}
+                onSelect={(t) =>
+                  // Adjustments can't be edited, so they go straight to Delete
+                  t.type === 'ADJUSTMENT' ? setDeleting(t) : setForm({ transaction: t })
+                }
+              />
             ) : filtering ? (
               <div className="transactions__empty">
                 <p>No transactions match.</p>
-                <button type="button" className="btn btn--secondary" onClick={() => setFilters(NO_FILTERS)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setFilters(NO_FILTERS)}
+                >
                   Clear filters
                 </button>
               </div>
@@ -170,9 +180,9 @@ function Transactions() {
 
       {deleting && (
         <DeleteModal
-          name={deleting.category.name}
+          name={describeTransaction(deleting).name}
           kindLabel="transaction"
-          details={`${formatMoney(deleting.amount)} · ${dayLabel(deleting.date)}`}
+          details={`${describeTransaction(deleting).amountText} · ${dayLabel(deleting.date)}`}
           onClose={() => setDeleting(null)}
           onDelete={deleteTransaction}
         />
