@@ -44,8 +44,10 @@ model Transaction {
   account   Account  @relation(fields: [accountId], references: [id], onDelete: NoAction)
   accountId String // Foreign key
 
-  category  Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction)
-  categoryId String
+  // Required for INCOME and EXPENSE (enforced by a CHECK in the database);
+  // adjustments have none
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+  categoryId String?
 
   // Who paid you (only for INCOME transactions, optional)
   incomeSource   IncomeSource? @relation(fields: [incomeSourceId], references: [id], onDelete: NoAction)
@@ -133,6 +135,7 @@ enum TransactionType {
   INCOME
   EXPENSE
   TRANSFER
+  ADJUSTMENT // corrects a balance to match the bank; amount can be negative
 }
 
 // Budget group for a category (50/30/20 rule); income is its own group

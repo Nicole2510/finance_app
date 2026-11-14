@@ -180,6 +180,9 @@ transactionsRouter.patch("/:id", async (req, res) => {
   const userId = req.user!.id;
   const existing = await findOwned(userId, req.params.id);
   const changes = parseBody(updateSchema, req.body);
+  if (existing.type === "ADJUSTMENT") {
+    throw new HttpError(400, "Adjustments can't be edited. Delete it and reconcile again.");
+  }
   if (existing.type === "TRANSFER") throw new HttpError(400, "Transfers can't be edited yet");
 
   // Check the transaction as it would be after the change, not just the new
@@ -190,7 +193,8 @@ transactionsRouter.patch("/:id", async (req, res) => {
       type: changes.type ?? existing.type,
       date: changes.date ?? existing.date.toISOString().slice(0, 10),
       accountId: changes.accountId ?? existing.accountId,
-      categoryId: changes.categoryId ?? existing.categoryId,
+      // Income and expenses always have a category (the database enforces it)
+      categoryId: changes.categoryId ?? existing.categoryId!,
       incomeSourceId:
         changes.incomeSourceId === undefined ? existing.incomeSourceId : changes.incomeSourceId,
     },

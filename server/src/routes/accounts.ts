@@ -4,6 +4,7 @@ import { AccountType, Prisma, type Account } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { getBalances } from "../lib/balances.js";
+import { adjustmentAmount } from "../lib/reconcile.js";
 import { HttpError } from "../lib/httpError.js";
 import { dateSchema, moneySchema, nameSchema, parseBody } from "../lib/validation.js";
 
@@ -96,6 +97,46 @@ accountsRouter.patch("/:id", async (req, res) => {
   });
   const balances = await getBalances(userId);
   res.json(toJson(updated, balances.get(updated.id)));
+});
+
+const reconcileSchema = z.strictObject({
+  actualBalance: moneySchema, // what the bank says, e.g. "950.26" (negative if owed)
+  date: dateSchema, // the day the bank showed it (the user's today)
+});
+
+// POST /api/accounts/:id/reconcile
+// Records an adjustment for the difference between the app's balance and the
+// real one, so history stays intact instead of the balance being overwritten
+accountsRouter.post("/:id/reconcile", async (req, res) => {
+  const userId = req.user!.id;
+  const account = await findOwned(userId, req.params.id);
+  const { actualBalance, date } = parseBody(reconcileSchema, req.body);
+
+  if (account.archivedAt) {
+    throw new HttpError(400, "Restore this account before reconciling it");
+  }
+  if (new Date(date) < account.openingDate) {
+    throw new HttpError(400, "The date can't be before the account's opening date");
+  }
+
+  const current = (await getBalances(userId)).get(account.id) ?? account.openingBalance;
+  const amount = adjustmentAmount(current, actualBalance);
+  if (amount.isZero()) throw new HttpError(400, "Your balance already matches");
+
+  // The adjustment and the account's "updated" time change together
+  await prisma.$transaction([
+    prisma.transaction.create({
+      data: { type: "ADJUSTMENT", amount, date: new Date(date), userId, accountId: account.id },
+    }),
+    prisma.account.update({ where: { id: account.id }, data: { updatedAt: new Date() } }),
+  ]);
+
+  const updated = await findOwned(userId, account.id);
+  const balances = await getBalances(userId);
+  res.status(201).json({
+    adjustment: amount.toFixed(2),
+    account: toJson(updated, balances.get(updated.id)),
+  });
 });
 
 // Permanently deletes an account, but only if no transactions use it
