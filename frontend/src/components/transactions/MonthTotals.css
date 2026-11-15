@@ -26,5 +26,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-.month-totals .is-income { color: var(--forest); }
-.month-totals .is-negative { color: #b4443e; }
+.month-totals .is-income {
+  color: var(--forest);
+}
+.month-totals .is-negative {
+  color: #b4443e;
+}

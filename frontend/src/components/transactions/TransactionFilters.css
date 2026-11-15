@@ -34,7 +34,9 @@
   color: var(--espresso);
 }
 
-.transaction-filters__search input::placeholder { color: var(--taupe); }
+.transaction-filters__search input::placeholder {
+  color: var(--taupe);
+}
 
 /* Filters sit together on the right, after the search */
 .transaction-filters .filter-select {
@@ -56,6 +58,57 @@
 
 /* Phones: search takes the first line, filters the next */
 @media (max-width: 560px) {
-  .transaction-filters__search { flex-basis: 100%; }
-  .transaction-filters .filter-select { margin-left: 0; }
+  .transaction-filters__search {
+    flex-basis: 100%;
+  }
+  .transaction-filters .filter-select {
+    margin-left: 0;
+  }
+}
+
+/* Resets every filter at once; only shown while one is on */
+.transaction-filters__clear {
+  padding: 0 14px;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--espresso-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.transaction-filters__clear:hover {
+  background: var(--cream);
+}
+
+.transaction-filters__clear:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+}
+
+/* Opens the date range popup; dark while a range is on, like the filter icon */
+.transaction-filters__dates {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 46px;
+  min-height: 42px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--taupe);
+  cursor: pointer;
+}
+
+.transaction-filters__dates.is-active {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.transaction-filters__dates:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
 }

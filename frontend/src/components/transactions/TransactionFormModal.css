@@ -46,8 +46,12 @@
   color: var(--espresso-soft);
 }
 
-.transaction-form__type--expense { background: var(--cream); }
-.transaction-form__type--income { background: #e8e7f0; }
+.transaction-form__type--expense {
+  background: var(--cream);
+}
+.transaction-form__type--income {
+  background: #e8e7f0;
+}
 
 .transaction-form__delete {
   display: flex;
@@ -66,7 +70,9 @@
   cursor: pointer;
 }
 
-.transaction-form__delete:hover { background: #fbeeec; }
+.transaction-form__delete:hover {
+  background: #fbeeec;
+}
 
 .transaction-form__delete:focus-visible {
   outline: 2px solid var(--rose);

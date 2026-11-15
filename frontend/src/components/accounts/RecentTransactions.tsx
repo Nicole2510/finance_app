@@ -29,7 +29,20 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
   const hasMore = transactions.length > COLLAPSED
 
   return (
-    <Section>
+    <Section
+      action={
+        hasMore && (
+          <button
+            type="button"
+            className="recent-list__toggle"
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? 'Show less' : `View all (${transactions.length})`}
+          </button>
+        )
+      }
+    >
       <ul className={`recent-list${expanded ? ' is-expanded' : ''}`}>
         {shown.map((t) => {
           const { emoji, name, amountText, isIncome } = describeTransaction(t)
@@ -55,26 +68,18 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
           Showing the latest {RECENT_MAX}. See Transactions for older ones.
         </p>
       )}
-
-      {hasMore && (
-        <button
-          type="button"
-          className="btn btn--secondary recent-list__more"
-          aria-expanded={expanded}
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? 'Show less' : `View all (${transactions.length})`}
-        </button>
-      )}
     </Section>
   )
 }
 
-// The heading every state shares
-function Section({ children }: { children: ReactNode }) {
+// The heading every state shares, with an optional link beside it
+function Section({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <section className="account-details__activity">
-      <h3>Recent transactions</h3>
+      <div className="account-details__activity-header">
+        <h3>Recent transactions</h3>
+        {action}
+      </div>
       {children}
     </section>
   )

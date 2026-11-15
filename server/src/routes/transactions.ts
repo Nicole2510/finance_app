@@ -30,20 +30,25 @@ export const createSchema = z.strictObject({
 // Edits: any of the same fields; incomeSourceId: null removes the source
 const updateSchema = createSchema.partial();
 
-const listSchema = z.object({
-  limit: z.coerce
-    .number()
-    .int("Limit must be a whole number")
-    .min(1, "Limit must be at least 1")
-    .max(50, "Limit cannot exceed 50")
-    .optional(),
-  month: z
-    .string()
-    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
-    .optional(),
-  accountId: z.uuid().optional(),
-  categoryId: z.uuid().optional(),
-});
+const listSchema = z
+  .object({
+    limit: z.coerce
+      .number()
+      .int("Limit must be a whole number")
+      .min(1, "Limit must be at least 1")
+      .max(50, "Limit cannot exceed 50")
+      .optional(),
+    month: z
+      .string()
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
+      .optional(),
+    accountId: z.uuid().optional(),
+    categoryId: z.uuid().optional(),
+    // A date range (both days included), across months. Used instead of month.
+    from: dateSchema.optional(),
+    to: dateSchema.optional(),
+  })
+  .refine((q) => !q.from || !q.to || q.from <= q.to, "The start date must be before the end date");
 
 // Related records each transaction is sent with, so the UI can show their names
 const related = {
@@ -149,12 +154,19 @@ export function touchAccounts(userId: string, accountIds: string[]) {
 
 // GET /api/transactions?month=2026-10&accountId=...&categoryId=...
 transactionsRouter.get("/", async (req, res) => {
-  const { month, accountId, categoryId, limit } = parseBody(listSchema, req.query);
+  const { month, accountId, categoryId, limit, from, to } = parseBody(listSchema, req.query);
+  // "YYYY-MM-DD" strings compare like dates, and the column holds days only
+  const range =
+    from || to
+      ? { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) }
+      : month
+        ? monthRange(month)
+        : undefined;
 
   const transactions = await prisma.transaction.findMany({
     where: {
       userId: req.user!.id,
-      ...(month ? { date: monthRange(month) } : {}),
+      ...(range ? { date: range } : {}),
       ...(accountId ? { accountId } : {}),
       ...(categoryId ? { categoryId } : {}),
     },
@@ -180,6 +192,34 @@ transactionsRouter.post("/", async (req, res) => {
     touchAccounts(userId, [data.accountId]),
   ]);
   res.status(201).json(toJson(transaction));
+});
+
+const bulkDeleteSchema = z.strictObject({
+  ids: z
+    .array(z.uuid())
+    .min(1, "Choose at least one transaction")
+    .max(500, "Delete at most 500 transactions at a time"),
+});
+
+// POST /api/transactions/bulk-delete  { ids: [...] }
+// Deletes several transactions together, or none: if any id isn't one of this
+// user's transactions, nothing is deleted (and it's a 404, like a single delete)
+transactionsRouter.post("/bulk-delete", async (req, res) => {
+  const userId = req.user!.id;
+  const ids = [...new Set(parseBody(bulkDeleteSchema, req.body).ids)];
+
+  const owned = await prisma.transaction.findMany({
+    where: { id: { in: ids }, userId },
+    select: { accountId: true },
+  });
+  if (owned.length !== ids.length)
+    throw new HttpError(404, "Some of those transactions weren't found");
+
+  const [deleted] = await prisma.$transaction([
+    prisma.transaction.deleteMany({ where: { id: { in: ids }, userId } }),
+    touchAccounts(userId, [...new Set(owned.map((t) => t.accountId))]),
+  ]);
+  res.json({ deleted: deleted.count });
 });
 
 // Finds a transaction only if it belongs to this user; otherwise 404

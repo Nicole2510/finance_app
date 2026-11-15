@@ -26,5 +26,10 @@
   cursor: pointer;
 }
 
-.month-switcher__arrow:hover:not(:disabled) { background: var(--cream); }
-.month-switcher__arrow:disabled { color: var(--sand); cursor: default; }
+.month-switcher__arrow:hover:not(:disabled) {
+  background: var(--cream);
+}
+.month-switcher__arrow:disabled {
+  color: var(--sand);
+  cursor: default;
+}

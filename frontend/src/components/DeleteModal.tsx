@@ -4,6 +4,7 @@ import Modal from './Modal'
 
 type Props = {
   name: string
+  question?: string // replaces "Are you sure you want to delete “name”?"
   kindLabel: string // "category" or "income source"
   details?: string // short extra line, e.g. "$50.00 · Thu, Nov 12"
   onClose: () => void
@@ -15,7 +16,7 @@ type Props = {
 }
 
 // "Are you sure?" popup. If the item is in use, offers archiving instead.
-function DeleteModal({ name, kindLabel, details, onClose, onDelete, onArchive }: Props) {
+function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, onArchive }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -39,7 +40,9 @@ function DeleteModal({ name, kindLabel, details, onClose, onDelete, onArchive }:
         <span className="delete-modal__icon" aria-hidden>
           <Trash2 size={26} />
         </span>
-        <h2 className="delete-modal__title">Are you sure you want to delete “{name}”?</h2>
+        <h2 className="delete-modal__title">
+          {question ?? `Are you sure you want to delete “${name}”?`}
+        </h2>
 
         {error ? (
           <p className="form-error" role="alert">

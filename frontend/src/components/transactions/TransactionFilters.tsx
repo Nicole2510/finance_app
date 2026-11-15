@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { CalendarRange, Search } from 'lucide-react'
 import type { Filters } from '../../lib/transactionFilters'
 import type { Account } from '../../lib/types'
 import FilterSelect from '../FilterSelect'
@@ -8,6 +8,10 @@ type Props = {
   filters: Filters
   accounts: Account[]
   onChange: (filters: Filters) => void
+  onClear: () => void
+  onDates: () => void
+  dateRangeOn: boolean
+  filtering: boolean // any filter on; shows the Clear all button
 }
 
 const TYPES: { value: Filters['type']; label: string }[] = [
@@ -17,7 +21,15 @@ const TYPES: { value: Filters['type']; label: string }[] = [
 ]
 
 // Search, type and account filters above the table; the page owns the values
-function TransactionFilters({ filters, accounts, onChange }: Props) {
+function TransactionFilters({
+  filters,
+  accounts,
+  onChange,
+  onClear,
+  onDates,
+  dateRangeOn,
+  filtering,
+}: Props) {
   return (
     <div className="transaction-filters">
       <label className="transaction-filters__search">
@@ -30,6 +42,16 @@ function TransactionFilters({ filters, accounts, onChange }: Props) {
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
         />
       </label>
+
+      <button
+        type="button"
+        className={`transaction-filters__dates${dateRangeOn ? ' is-active' : ''}`}
+        aria-label="Filter by dates"
+        aria-pressed={dateRangeOn}
+        onClick={onDates}
+      >
+        <CalendarRange size={18} aria-hidden />
+      </button>
 
       <FilterSelect
         label="Filter by type"
@@ -51,6 +73,12 @@ function TransactionFilters({ filters, accounts, onChange }: Props) {
           </option>
         ))}
       </select>
+
+      {filtering && (
+        <button type="button" className="transaction-filters__clear" onClick={onClear}>
+          Clear all
+        </button>
+      )}
     </div>
   )
 }

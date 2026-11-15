@@ -5,26 +5,39 @@ import { describeTransaction } from '../../lib/transactionDisplay'
 type Props = {
   transaction: Transaction
   onSelect: () => void
+  checked: boolean
+  onCheck: () => void
 }
 
 // One table row. Clicking it (or Enter / Space when focused) opens it.
-function TransactionRow({ transaction: t, onSelect }: Props) {
+function TransactionRow({ transaction: t, onSelect, checked, onCheck }: Props) {
   const { emoji, name, pill, amountText, isIncome } = describeTransaction(t)
   const details = [t.incomeSource?.name, t.notes].filter(Boolean).join(' · ')
 
   return (
     <tr
-      className="transaction-row"
+      className={`transaction-row${checked ? ' is-checked' : ''}`}
       tabIndex={0}
       aria-label={`Open ${name}, ${amountText}`}
       onClick={onSelect}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return // keys meant for the checkbox
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onSelect()
         }
       }}
     >
+      <td className="transaction-row__check">
+        {/* Selecting is separate from opening, so the click stops here */}
+        <input
+          type="checkbox"
+          aria-label={`Select ${name}, ${amountText}, ${dayLabel(t.date)}`}
+          checked={checked}
+          onClick={(e) => e.stopPropagation()}
+          onChange={onCheck}
+        />
+      </td>
       <td className="transaction-row__date">{dayLabel(t.date)}</td>
       <td className="transaction-row__category">
         {/* Flex layout lives on an inner wrapper: a flex <td> stops behaving like a table cell */}
