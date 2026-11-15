@@ -205,6 +205,16 @@ describe("editing accounts", () => {
     expect(res.body.openingDate).toBe("2026-09-01");
   });
 
+  it("allows moving the opening date later past transactions that were already history", async () => {
+    const { body: account } = await alice.post("/api/accounts", valid);
+    await addTransaction(account.id, "EXPENSE", "10.00", "2026-09-15"); // before Oct 1: history
+
+    const res = await alice.patch(`/api/accounts/${account.id}`, { openingDate: "2026-10-10" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.currentBalance).toBe("2430.00");
+  });
+
   it("blocks moving the opening date after existing transactions", async () => {
     const { body: account } = await alice.post("/api/accounts", valid);
     await addTransaction(account.id, "EXPENSE", "10.00", "2026-10-05");

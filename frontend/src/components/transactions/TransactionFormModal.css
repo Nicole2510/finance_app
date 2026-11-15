@@ -72,3 +72,9 @@
   outline: 2px solid var(--rose);
   outline-offset: 2px;
 }
+
+/* Shown when the date is before the account's opening date */
+.transaction-form__history {
+  font-size: 13px;
+  color: var(--text-muted);
+}

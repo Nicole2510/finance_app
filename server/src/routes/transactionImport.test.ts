@@ -77,10 +77,10 @@ describe("preview", () => {
     ]);
 
     const statuses = res.body.rows.map((r: { status: string }) => r.status);
-    expect(statuses).toEqual(["ready", "problem", "problem", "problem", "problem", "problem"]);
+    // Before the opening date is fine: it's kept as history
+    expect(statuses).toEqual(["ready", "problem", "problem", "problem", "ready", "problem"]);
     expect(res.body.rows[3].message).toMatch(/doesn't match/);
-    expect(res.body.rows[4].message).toMatch(/opening date/);
-    expect(res.body.summary).toEqual({ ready: 1, problems: 5, duplicates: 0 });
+    expect(res.body.summary).toEqual({ ready: 2, problems: 4, duplicates: 0 });
   });
 
   it("treats archived and other users' records as problems", async () => {

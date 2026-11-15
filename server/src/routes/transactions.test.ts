@@ -142,7 +142,7 @@ describe("invalid input", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects a date before the account's opening date", async () => {
+  it("keeps a date before the account's opening date as history, without changing the balance", async () => {
     const { account, groceries } = await setUp(alice);
 
     const res = await alice.post("/api/transactions", {
@@ -153,8 +153,12 @@ describe("invalid input", () => {
       categoryId: groceries,
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/opening date/);
+    expect(res.status).toBe(201);
+    // Shows in its own month...
+    const { body: september } = await alice.get("/api/transactions?month=2026-09");
+    expect(september).toHaveLength(1);
+    // ...but the opening balance already includes it, so the balance doesn't move
+    expect(await balanceOf(alice, account.id)).toBe("1000.00");
   });
 });
 
@@ -495,7 +499,6 @@ describe("editing transactions", () => {
   it.each<[object, string]>([
     [{ amount: "0" }, "zero amount"],
     [{ amount: "-5" }, "negative amount"],
-    [{ date: "2026-09-30" }, "before the account's opening date"],
     [{ date: "2026-02-30" }, "not a real date"],
     [{ type: "TRANSFER" }, "transfers aren't supported yet"],
     [{ userId: "someone-else" }, "sneaking in another user"],

@@ -117,10 +117,9 @@ export function checkReferences(data: References, found: Found, kept?: Kept): st
     if (!source) return "Choose an active income source";
   }
 
-  // Earlier days are already included in the opening balance
-  if (new Date(data.date) < account.openingDate) {
-    return "The date can't be before the account's opening date";
-  }
+  // Dates before the account's opening date are allowed: they're kept as
+  // history (in that month's lists and totals) but don't change the balance,
+  // which already includes them through the opening balance
   return null;
 }
 

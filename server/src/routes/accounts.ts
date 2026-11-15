@@ -73,11 +73,15 @@ accountsRouter.patch("/:id", async (req, res) => {
   const account = await findOwned(userId, req.params.id);
   const { archived, openingDate, ...changes } = parseBody(updateSchema, req.body);
 
-  // Moving the opening date later would silently drop older transactions
-  // from the balance, so block it if any exist before the new date
+  // Moving the opening date later would silently stop transactions between
+  // the old and new dates counting toward the balance, so block that. (Ones
+  // already before the old date are history and don't count either way.)
   if (openingDate !== undefined) {
     const earlier = await prisma.transaction.count({
-      where: { accountId: account.id, date: { lt: new Date(openingDate) } },
+      where: {
+        accountId: account.id,
+        date: { gte: account.openingDate, lt: new Date(openingDate) },
+      },
     });
     if (earlier > 0) {
       throw new HttpError(

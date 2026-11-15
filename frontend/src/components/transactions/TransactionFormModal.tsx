@@ -4,7 +4,7 @@ import Modal from '../Modal'
 import DatePicker from '../DatePicker'
 import { categoriesFor } from '../../lib/categories'
 import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
-import { today } from '../../lib/dates'
+import { formatDate, today } from '../../lib/dates'
 import type { Account, Category, EntryType, IncomeSource, Transaction } from '../../lib/types'
 import './TransactionFormModal.css'
 
@@ -154,7 +154,13 @@ function TransactionFormModal({
 
         <div className="form-field">
           <span className="form-field__label">Date</span>
-          <DatePicker value={date} min={account?.openingDate} max={today()} onChange={setDate} />
+          <DatePicker value={date} max={today()} onChange={setDate} />
+          {account && date < account.openingDate && (
+            <span className="transaction-form__history">
+              Before this account's opening date ({formatDate(account.openingDate)}): kept as
+              history, and doesn't change the balance.
+            </span>
+          )}
         </div>
 
         <label className="form-field">
