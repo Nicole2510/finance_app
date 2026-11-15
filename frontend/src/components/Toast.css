@@ -1,0 +1,115 @@
+/* Top right on desktop, across the top on phones; above everything */
+.toasts {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(380px, calc(100vw - 24px));
+  pointer-events: none; /* only the toasts themselves catch clicks */
+}
+
+.toast {
+  --tone: var(--forest);
+  --tone-soft: #e5ebe2;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  padding: 14px 14px 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  pointer-events: auto;
+  animation: toast-in 0.22s ease-out;
+}
+
+.toast--info { --tone: var(--espresso-soft); --tone-soft: var(--cream); }
+.toast--error { --tone: #b4443e; --tone-soft: #f6e3e1; }
+
+.toast__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+
+.toast__text { min-width: 0; }
+
+.toast__title {
+  font-weight: 600;
+  color: var(--espresso);
+}
+
+.toast__message {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.toast__close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--taupe);
+  cursor: pointer;
+}
+
+.toast__close:hover { background: var(--cream); color: var(--espresso); }
+
+.toast__close:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+}
+
+/* The countdown: shrinks over 5 seconds, then the toast closes */
+.toast__timer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--tone);
+  opacity: 0.5;
+  transform-origin: left;
+  animation: toast-timer 5s linear forwards;
+}
+
+.toast:hover .toast__timer,
+.toast:focus-within .toast__timer {
+  animation-play-state: paused;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes toast-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .toasts {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
