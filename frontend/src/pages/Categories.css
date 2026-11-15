@@ -33,7 +33,9 @@
 
 .tile--needs { background: #f6ebdf; }
 .tile--wants { background: #f6e3e1; }
-.tile--savings_debt { background: #e5ebe2; }
+.tile--savings { background: #e5ebe2; }
+.tile--debt { background: #f3e9df; }
+.tile--investments { background: #e3eaec; }
 .tile--income { background: #e8e7f0; }
 .tile--sources { background: #ebe8e3; }
 
@@ -258,16 +260,6 @@
   margin: 8px 0 24px;
   font-size: 14px;
   color: var(--text-muted);
-}
-
-/* Select with a properly centred, inset arrow (fixes the old offset chevron) */
-.form-select {
-  padding-right: 44px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%232f2724' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  cursor: pointer;
 }
 
 @media (max-width: 480px) {

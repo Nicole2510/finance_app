@@ -1,6 +1,7 @@
 // Shapes returned by the API
 
-export type CategoryGroup = 'NEEDS' | 'WANTS' | 'SAVINGS_DEBT' | 'INCOME'
+// SAVINGS, DEBT and INVESTMENTS together make up the "20%" in 50/30/20
+export type CategoryGroup = 'NEEDS' | 'WANTS' | 'SAVINGS' | 'DEBT' | 'INVESTMENTS' | 'INCOME'
 
 export type Category = {
   id: string
@@ -31,4 +32,21 @@ export type Account = {
   currentBalance: string
   archivedAt: string | null
   updatedAt: string
+}
+
+// Income and expenses are entered by hand; adjustments come from reconciling
+export type EntryType = 'INCOME' | 'EXPENSE'
+
+// A transaction comes with the names of what it belongs to, so lists can show them
+export type Transaction = {
+  id: string
+  type: EntryType | 'ADJUSTMENT'
+  // Positive for income and expenses (type gives the direction);
+  // adjustments carry their own sign, e.g. "-3.15"
+  amount: string
+  date: string // "YYYY-MM-DD"
+  notes: string | null
+  account: { id: string; name: string }
+  category: { id: string; name: string; emoji: string | null; group: CategoryGroup } | null
+  incomeSource: { id: string; name: string } | null
 }

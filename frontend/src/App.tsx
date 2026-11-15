@@ -6,6 +6,7 @@ import Profile from './pages/Profile'
 import ComingSoon from './pages/ComingSoon'
 import Categories from './pages/Categories'
 import Accounts from './pages/Accounts'
+import Transactions from './pages/Transactions'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 
@@ -23,7 +24,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/accounts/:id?" element={<Accounts />} />
-        <Route path="/transactions" element={<ComingSoon title="Transactions" />} />
+        <Route path="/transactions" element={<Transactions />} />
         <Route path="/budgets" element={<ComingSoon title="Budgets" />} />
         <Route path="/debts" element={<ComingSoon title="Debts & Loans" />} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />

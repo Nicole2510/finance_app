@@ -67,3 +67,30 @@ img {
   max-width: 100%;
   display: block;
 }
+
+/* Thin, rounded scrollbars in our palette instead of the browser's default.
+   scrollbar-width / scrollbar-color are the standard; ::-webkit-scrollbar
+   covers Safari. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sand) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--sand) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--taupe) padding-box;
+}

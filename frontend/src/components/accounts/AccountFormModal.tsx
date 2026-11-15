@@ -3,6 +3,7 @@ import Modal from '../Modal'
 import DatePicker from '../DatePicker'
 import { accountTypes } from '../../lib/accountTypes'
 import { toStoredBalance } from '../../lib/accountBalance'
+import { today } from '../../lib/dates'
 import type { Account, AccountType } from '../../lib/types'
 
 // What the API expects (credit card balances already negative)
@@ -18,11 +19,6 @@ type Props = {
   onClose: () => void
   // Returns an error message to show, or null if it saved
   onSubmit: (values: AccountValues) => Promise<string | null>
-}
-
-// Today in the user's time zone as "YYYY-MM-DD" (Canadian format happens to match)
-function today() {
-  return new Date().toLocaleDateString('en-CA')
 }
 
 // Add / edit account popup

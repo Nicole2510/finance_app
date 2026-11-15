@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
-import type { User } from "@prisma/client";
+import { Prisma, type User } from "@prisma/client";
 import { prisma } from "../db.js";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories.js";
 
@@ -36,20 +36,29 @@ export const requireUser: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    // upsert (not create) so two requests arriving at once can't
-    // both try to create the same user
-    user = await prisma.user.upsert({
-      where: { clerkUserId },
-      update: {},
-      create: {
-        clerkUserId,
-        email,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        // New users start with the default categories
-        categories: { create: DEFAULT_CATEGORIES },
-      },
-    });
+    try {
+      user = await prisma.user.upsert({
+        where: { clerkUserId },
+        update: {},
+        create: {
+          clerkUserId,
+          email,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          // New users start with the default categories
+          categories: { create: DEFAULT_CATEGORIES },
+        },
+      });
+    } catch (err) {
+      // Two first requests at once (e.g. a page loading several things): both
+      // saw no user and both tried to create one. Because of the nested
+      // categories, Prisma's upsert checks then inserts, so one can lose with a
+      // unique-constraint error (P2002). The user exists now, so just use it.
+      const raced =
+        err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+      if (!raced) throw err;
+      user = await prisma.user.findUniqueOrThrow({ where: { clerkUserId } });
+    }
   }
 
   req.user = user;

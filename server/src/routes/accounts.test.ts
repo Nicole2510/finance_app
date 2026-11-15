@@ -176,12 +176,14 @@ describe("editing accounts", () => {
 
   it("moves updatedAt forward when an account is edited", async () => {
     const { body: account } = await alice.post("/api/accounts", valid);
+    // Start from a time well in the past: creating and editing within the same
+    // millisecond would otherwise give equal timestamps and a flaky test
+    const longAgo = new Date("2026-01-01T00:00:00Z");
+    await prisma.account.update({ where: { id: account.id }, data: { updatedAt: longAgo } });
 
     const res = await alice.patch(`/api/accounts/${account.id}`, { name: "New name" });
 
-    expect(new Date(res.body.updatedAt).getTime()).toBeGreaterThan(
-      new Date(account.updatedAt).getTime(),
-    );
+    expect(new Date(res.body.updatedAt).getTime()).toBeGreaterThan(longAgo.getTime());
   });
 
   it("renames and changes type", async () => {

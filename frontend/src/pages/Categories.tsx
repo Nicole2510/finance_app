@@ -15,7 +15,9 @@ type TileId = CategoryGroup | 'SOURCES'
 const TILES: { id: TileId; label: string; emoji: string; hint: string; addLabel: string }[] = [
   { id: 'NEEDS', label: 'Needs', emoji: '🛒', hint: 'The essentials for everyday life.', addLabel: 'Add category to Needs' },
   { id: 'WANTS', label: 'Wants', emoji: '🛍️', hint: 'The fun stuff that makes life sweet.', addLabel: 'Add category to Wants' },
-  { id: 'SAVINGS_DEBT', label: 'Savings & Debt', emoji: '🌿', hint: 'Future you says thanks.', addLabel: 'Add category to Savings & Debt' },
+  { id: 'SAVINGS', label: 'Savings', emoji: '🐷', hint: 'Money set aside for later. Future you says thanks.', addLabel: 'Add category to Savings' },
+  { id: 'DEBT', label: 'Debt', emoji: '💳', hint: 'Paying down what you owe.', addLabel: 'Add category to Debt' },
+  { id: 'INVESTMENTS', label: 'Investments', emoji: '📈', hint: 'Growing your money over time.', addLabel: 'Add category to Investments' },
   { id: 'INCOME', label: 'Income', emoji: '🪙', hint: 'The kinds of money coming in.', addLabel: 'Add income category' },
   { id: 'SOURCES', label: 'Income Sources', emoji: '🏛️', hint: 'Who pays you, like an employer or client.', addLabel: 'Add income source' },
 ]

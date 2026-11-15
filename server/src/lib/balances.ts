@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 
 // Current balance of each of a user's accounts, calculated by the database:
-//   openingBalance + income − expenses
+//   openingBalance + income − expenses + adjustments (which carry their own sign)
 // counting only transactions on or after the account's openingDate
 // (earlier ones are already included in the opening balance).
 // Transfers and debt payments get added here in M5/M6.
@@ -13,6 +13,7 @@ export async function getBalances(userId: string): Promise<Map<string, Prisma.De
              CASE t.type
                WHEN 'INCOME' THEN t.amount
                WHEN 'EXPENSE' THEN -t.amount
+               WHEN 'ADJUSTMENT' THEN t.amount
                ELSE 0
              END
            ), 0) AS balance
