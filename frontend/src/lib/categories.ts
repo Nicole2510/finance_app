@@ -1,19 +1,5 @@
 import type { Category, EntryType } from './types'
 
-// ───────────────────────────────────────────────────────────────────────────
-// 🧑‍💻 PRACTICE: which categories the transaction form offers for a type.
-//
-//   type 'INCOME'  → only categories in the INCOME group
-//   type 'EXPENSE' → every group EXCEPT INCOME (Needs, Wants, Savings & Debt)
-//
-//   Leave out archived categories (archivedAt isn't null), with one exception:
-//   keepId is the category a transaction being edited already uses. Keep that
-//   one even if it's archived, so editing an old transaction still works.
-//
-//   Return them sorted by name.
-//
-// Hints: categories.filter(...)  and  [...list].sort((a, b) => a.name.localeCompare(b.name))
-// ───────────────────────────────────────────────────────────────────────────
 export function categoriesFor(
   type: EntryType,
   categories: Category[], // array containing all categories

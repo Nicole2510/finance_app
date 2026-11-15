@@ -93,3 +93,162 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+.import__found {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  background: #e5ebe2;
+  font-size: 14px;
+  color: var(--forest);
+}
+
+/* Step 3 */
+.name-matcher__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.name-matcher__waiting,
+.name-matcher__done {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.name-matcher__waiting { color: #b4443e; }
+.name-matcher__done { color: var(--forest); }
+
+.name-matcher__list {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.name-matcher__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.name-matcher__row + .name-matcher__row { border-top: 1px solid var(--border); }
+.name-matcher__row.is-waiting { background: #fbf3f1; }
+
+.name-matcher__name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.name-matcher__name small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.name-matcher__choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name-matcher__new {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+/* The emoji picker takes the full width above the name and group */
+.name-matcher__new > .emoji-picker {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .name-matcher__row { grid-template-columns: 1fr; }
+}
+
+/* Room below the last box so it never hugs the popup's bottom edge */
+.modal--large .modal__content {
+  padding-bottom: 40px;
+}
+
+.modal--large .modal-actions {
+  margin-top: 24px;
+}
+
+/* Step 4 */
+.review-summary {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--espresso-soft);
+}
+
+.review-table {
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+}
+
+.review-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.review-table td { vertical-align: middle; }
+
+.review-table__label {
+  min-width: 140px;
+  white-space: normal;
+}
+
+.review-table__label small,
+.review-table__message {
+  display: block;
+  max-width: 220px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: normal;
+}
+
+.review-table__select.form-select {
+  min-width: 170px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 13px;
+}
+
+.review-table__amount { text-align: right; font-variant-numeric: tabular-nums; }
+.review-table td.is-income { color: var(--forest); }
+.review-table tr.is-left-out td { color: var(--text-muted); }
+
+.review-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.review-status--ready { background: #e5ebe2; color: var(--forest); }
+.review-status--skipped { background: var(--sand); color: var(--espresso-soft); }
+.review-status--duplicate { background: #f3e9df; color: #8a5a2b; }
+.review-status--problem { background: #f6e3e1; color: #b4443e; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

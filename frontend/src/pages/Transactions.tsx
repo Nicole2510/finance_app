@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { FileUp, Plus } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
+import { useToast } from '../lib/toast'
 import { currentMonth, dayLabel, monthLabel } from '../lib/dates'
 import { describeTransaction } from '../lib/transactionDisplay'
 import { NO_FILTERS, type Filters } from '../lib/transactionFilters'
 import type { Account, Category, IncomeSource, Transaction } from '../lib/types'
 import DeleteModal from '../components/DeleteModal'
-import ImportModal from '../components/import/ImportModal'
 import PageHeader from '../components/PageHeader'
 import MonthSwitcher from '../components/transactions/MonthSwitcher'
 import MonthTotals from '../components/transactions/MonthTotals'
@@ -18,6 +18,9 @@ import TransactionFormModal, {
 } from '../components/transactions/TransactionFormModal'
 import './Page.css'
 import './Transactions.css'
+
+// The importer and its file readers only download the first time Import is used
+const ImportModal = lazy(() => import('../components/import/ImportModal'))
 
 function Transactions() {
   const apiFetch = useApiFetch()
@@ -44,6 +47,9 @@ function Transactions() {
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
   const [deleting, setDeleting] = useState<Transaction | null>(null)
   const [importing, setImporting] = useState(false)
+  const toast = useToast()
+  // Bumped when categories change elsewhere (e.g. made while importing)
+  const [lookupsVersion, setLookupsVersion] = useState(0)
 
   useEffect(() => {
     Promise.all([
@@ -51,7 +57,7 @@ function Transactions() {
       apiFetch<Category[]>('/api/categories?includeArchived=true'),
       apiFetch<IncomeSource[]>('/api/income-sources?includeArchived=true'),
     ]).then(([accounts, categories, sources]) => setLookups({ accounts, categories, sources }))
-  }, [apiFetch])
+  }, [apiFetch, lookupsVersion])
 
   useEffect(() => {
     // If the month changes before this answer arrives, ignore the old answer
@@ -117,6 +123,7 @@ function Transactions() {
           <button
             type="button"
             className="btn btn--secondary transactions__add"
+            disabled={!lookups}
             onClick={() => setImporting(true)}
           >
             <FileUp size={18} /> Import
@@ -189,7 +196,25 @@ function Transactions() {
         />
       )}
 
-      {importing && <ImportModal onClose={() => setImporting(false)} />}
+      {importing && (
+        <Suspense fallback={null}>
+          <ImportModal
+            accounts={lookups?.accounts ?? []}
+            categories={lookups?.categories ?? []}
+            onClose={() => setImporting(false)}
+            onCategoriesChanged={() => setLookupsVersion((v) => v + 1)}
+            onImported={(count, newestDate) => {
+              setImporting(false)
+              toast({
+                title: `Imported ${count} ${count === 1 ? 'transaction' : 'transactions'}`,
+                message: 'Your matches are remembered for next time.',
+              })
+              setParams({ month: newestDate.slice(0, 7) }) // show where they landed
+              setVersion((v) => v + 1)
+            }}
+          />
+        </Suspense>
+      )}
 
       {deleting && (
         <DeleteModal

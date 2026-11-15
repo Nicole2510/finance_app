@@ -17,7 +17,8 @@
     "papaparse": "^5.7.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router": "^8.5.0"
+    "react-router": "^8.5.0",
+    "read-excel-file": "^9.3.17"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

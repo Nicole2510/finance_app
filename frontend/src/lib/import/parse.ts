@@ -56,13 +56,21 @@ export function parseDate(value: string, format: DateFormat): string | null {
   }
 }
 
-// Which formats can read every one of these values. Both day/month and
-// month/day fitting (every day is 12 or under) is ambiguous: never guessed.
+// The format that reads the most of these dates, as long as it reads at least
+// 80% (so one typo doesn't stop the rest; that row is reported instead).
+// Day/month and month/day reading the same dates (every day is 12 or under)
+// is ambiguous: never guessed.
 export function detectDateFormat(values: string[]) {
   const filled = values.map((v) => v.trim()).filter(Boolean)
-  const fits = filled.length
-    ? DATE_FORMATS.map((f) => f.id).filter((id) => filled.every((v) => parseDate(v, id)))
-    : []
+  const counts = DATE_FORMATS.map((f) => ({
+    id: f.id,
+    count: filled.filter((v) => parseDate(v, f.id)).length,
+  }))
+  const most = Math.max(0, ...counts.map((c) => c.count))
+  const fits =
+    filled.length && most >= filled.length * 0.8
+      ? counts.filter((c) => c.count === most).map((c) => c.id)
+      : []
   const ambiguous = fits.includes('DMY') && fits.includes('MDY')
   return { format: ambiguous ? null : (fits[0] ?? null), ambiguous, fits }
 }

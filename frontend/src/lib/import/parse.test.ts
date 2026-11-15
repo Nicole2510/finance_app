@@ -48,6 +48,16 @@ describe('detectDateFormat', () => {
     expect(result.fits).toEqual(expect.arrayContaining(['DMY', 'MDY']))
   })
 
+  it("isn't thrown off by one typo among many dates", () => {
+    const dates = ['10/18/2026', '10/19/2026', '10/20/2026', '10/21/2026', '02/30/2026']
+
+    expect(detectDateFormat(dates).format).toBe('MDY')
+  })
+
+  it('finds nothing when most values are not dates', () => {
+    expect(detectDateFormat(['10/18/2026', 'soon', 'later']).format).toBeNull()
+  })
+
   it('ignores blank cells and finds nothing in a column of text', () => {
     expect(detectDateFormat(['2026-10-18', '', '2026-10-19']).format).toBe('YMD')
     expect(detectDateFormat(['Groceries', 'Rent']).format).toBeNull()
