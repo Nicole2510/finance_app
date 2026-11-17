@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
+import { cn } from '@/lib/utils'
 import type { Transaction } from '../../lib/types'
 import TransactionRow from './TransactionRow'
-import './TransactionList.css'
 
 type Props = {
   transactions: Transaction[] // newest first, as the API sends them
@@ -10,6 +10,9 @@ type Props = {
   onCheck: (id: string) => void
   onCheckAll: (checked: boolean) => void
 }
+
+const heading =
+  'bg-card px-4 py-3 text-left text-xs font-semibold tracking-[0.06em] text-foreground/80 uppercase'
 
 // Transactions as a table (stacked rows on phones), with a checkbox per row
 function TransactionList({ transactions, onSelect, checkedIds, onCheck, onCheckAll }: Props) {
@@ -40,11 +43,11 @@ function TransactionList({ transactions, onSelect, checkedIds, onCheck, onCheckA
       {/* Both parts reserve the scrollbar's width, so the columns line up.
           Headings are hidden on phones, where rows stack. */}
       <div className="shrink-0 overflow-hidden border-b border-border [scrollbar-gutter:stable] max-[720px]:hidden">
-        <table className="transaction-table table-fixed">
+        <table className="w-full table-fixed border-collapse max-[720px]:block">
           {columns}
           <thead>
             <tr>
-              <th scope="col" className="transaction-row__check">
+              <th scope="col" className={cn(heading, 'pr-0')}>
                 <input
                   ref={headerBox}
                   type="checkbox"
@@ -53,11 +56,19 @@ function TransactionList({ transactions, onSelect, checkedIds, onCheck, onCheckA
                   onChange={(e) => onCheckAll(e.target.checked)}
                 />
               </th>
-              <th scope="col">Date</th>
-              <th scope="col">Category</th>
-              <th scope="col">Group</th>
-              <th scope="col">Account</th>
-              <th scope="col" className="transaction-table__amount">
+              <th scope="col" className={heading}>
+                Date
+              </th>
+              <th scope="col" className={heading}>
+                Category
+              </th>
+              <th scope="col" className={heading}>
+                Group
+              </th>
+              <th scope="col" className={heading}>
+                Account
+              </th>
+              <th scope="col" className={cn(heading, 'text-right')}>
                 Amount
               </th>
             </tr>
@@ -66,9 +77,9 @@ function TransactionList({ transactions, onSelect, checkedIds, onCheck, onCheckA
       </div>
       {/* mb-2 keeps the scrollbar clear of the panel's rounded corner */}
       <div className="mb-2 min-h-0 overflow-y-auto [scrollbar-gutter:stable] max-[860px]:mb-0 max-[860px]:overflow-visible">
-        <table className="transaction-table table-fixed">
+        <table className="w-full table-fixed border-collapse max-[720px]:block">
           {columns}
-          <tbody>
+          <tbody className="max-[720px]:block">
             {transactions.map((t) => (
               <TransactionRow
                 key={t.id}
