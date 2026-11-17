@@ -76,8 +76,18 @@ describe("adding transactions", () => {
     const { account, groceries, salary } = await setUp(alice);
     const base = { date: "2026-10-18", accountId: account.id };
 
-    await alice.post("/api/transactions", { ...base, type: "EXPENSE", amount: "62.14", categoryId: groceries });
-    await alice.post("/api/transactions", { ...base, type: "INCOME", amount: "500", categoryId: salary });
+    await alice.post("/api/transactions", {
+      ...base,
+      type: "EXPENSE",
+      amount: "62.14",
+      categoryId: groceries,
+    });
+    await alice.post("/api/transactions", {
+      ...base,
+      type: "INCOME",
+      amount: "500",
+      categoryId: salary,
+    });
 
     // 1000.00 − 62.14 + 500.00
     expect(await balanceOf(alice, account.id)).toBe("1437.86");
@@ -142,7 +152,7 @@ describe("invalid input", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects a date before the account's opening date", async () => {
+  it("keeps a date before the account's opening date as history, without changing the balance", async () => {
     const { account, groceries } = await setUp(alice);
 
     const res = await alice.post("/api/transactions", {
@@ -153,8 +163,12 @@ describe("invalid input", () => {
       categoryId: groceries,
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/opening date/);
+    expect(res.status).toBe(201);
+    // Shows in its own month...
+    const { body: september } = await alice.get("/api/transactions?month=2026-09");
+    expect(september).toHaveLength(1);
+    // ...but the opening balance already includes it, so the balance doesn't move
+    expect(await balanceOf(alice, account.id)).toBe("1000.00");
   });
 });
 
@@ -495,7 +509,6 @@ describe("editing transactions", () => {
   it.each<[object, string]>([
     [{ amount: "0" }, "zero amount"],
     [{ amount: "-5" }, "negative amount"],
-    [{ date: "2026-09-30" }, "before the account's opening date"],
     [{ date: "2026-02-30" }, "not a real date"],
     [{ type: "TRANSFER" }, "transfers aren't supported yet"],
     [{ userId: "someone-else" }, "sneaking in another user"],
@@ -647,5 +660,122 @@ describe("an account's updated time follows its activity", () => {
     });
 
     expect(await updatedAtOf(account.id)).toBe(longAgo.getTime());
+  });
+});
+
+describe("filtering by a date range", () => {
+  async function addOn(
+    user: ReturnType<typeof as>,
+    accountId: string,
+    categoryId: string,
+    date: string,
+  ) {
+    await user.post("/api/transactions", {
+      type: "EXPENSE",
+      amount: "1",
+      date,
+      accountId,
+      categoryId,
+    });
+  }
+  const dates = (body: { date: string }[]) => body.map((t) => t.date);
+
+  it("returns the days in the range across months, including both ends", async () => {
+    const { account, groceries } = await setUp(alice);
+    for (const d of ["2026-10-14", "2026-10-15", "2026-10-31", "2026-11-14", "2026-11-15"]) {
+      await addOn(alice, account.id, groceries, d);
+    }
+
+    const { body } = await alice.get("/api/transactions?from=2026-10-15&to=2026-11-14");
+
+    expect(dates(body)).toEqual(["2026-11-14", "2026-10-31", "2026-10-15"]);
+  });
+
+  it("works with only a start or only an end, and with other filters", async () => {
+    const { account, groceries, rent } = await setUp(alice);
+    await addOn(alice, account.id, groceries, "2026-10-05");
+    await addOn(alice, account.id, rent, "2026-10-20");
+
+    const after = await alice.get("/api/transactions?from=2026-10-10");
+    const before = await alice.get("/api/transactions?to=2026-10-10");
+    const rentOnly = await alice.get(`/api/transactions?from=2026-10-01&categoryId=${rent}`);
+
+    expect(dates(after.body)).toEqual(["2026-10-20"]);
+    expect(dates(before.body)).toEqual(["2026-10-05"]);
+    expect(dates(rentOnly.body)).toEqual(["2026-10-20"]);
+  });
+
+  it.each(["from=2026-11-01&to=2026-10-01", "from=2026-02-30", "to=October"])(
+    "rejects %s",
+    async (query) => {
+      expect((await alice.get(`/api/transactions?${query}`)).status).toBe(400);
+    },
+  );
+});
+
+describe("deleting several transactions", () => {
+  async function three() {
+    const { account, groceries } = await setUp(alice);
+    const txs = [];
+    for (const amount of ["10", "20", "30"]) {
+      const { body } = await alice.post("/api/transactions", {
+        type: "EXPENSE",
+        amount,
+        date: "2026-10-18",
+        accountId: account.id,
+        categoryId: groceries,
+      });
+      txs.push(body);
+    }
+    return { account, txs };
+  }
+
+  it("deletes the chosen ones and the balance goes back", async () => {
+    const { account, txs } = await three();
+
+    const res = await alice.post("/api/transactions/bulk-delete", { ids: [txs[0].id, txs[2].id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ deleted: 2 });
+    expect(await prisma.transaction.count()).toBe(1);
+    expect(await balanceOf(alice, account.id)).toBe("980.00"); // 1000 − 20 left
+  });
+
+  it("deletes nothing if any id isn't one of yours", async () => {
+    const { txs } = await three();
+    const { account: theirs, groceries } = await setUp(bob);
+    const { body: theirTx } = await bob.post("/api/transactions", {
+      type: "EXPENSE",
+      amount: "5",
+      date: "2026-10-18",
+      accountId: theirs.id,
+      categoryId: groceries,
+    });
+
+    const res = await alice.post("/api/transactions/bulk-delete", { ids: [txs[0].id, theirTx.id] });
+
+    expect(res.status).toBe(404);
+    expect(await prisma.transaction.count()).toBe(4); // all still there, Bob's included
+  });
+
+  it("treats the same id twice as one", async () => {
+    const { txs } = await three();
+
+    const res = await alice.post("/api/transactions/bulk-delete", { ids: [txs[0].id, txs[0].id] });
+
+    expect(res.body).toEqual({ deleted: 1 });
+  });
+
+  it.each<[object, string]>([
+    [{ ids: [] }, "nothing chosen"],
+    [{ ids: ["not-an-id"] }, "a malformed id"],
+    [
+      { ids: Array.from({ length: 501 }, () => "00000000-0000-4000-8000-000000000000") },
+      "too many",
+    ],
+    [{}, "no ids"],
+    [{ ids: [], userId: "x" }, "sneaking in another user"],
+  ])("rejects %s", async (body) => {
+    expect((await alice.post("/api/transactions/bulk-delete", body)).status).toBe(400);
   });
 });

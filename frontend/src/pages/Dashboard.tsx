@@ -1,5 +1,4 @@
 import { useUser } from '@clerk/react'
-import './Page.css'
 
 function greeting() {
   const hour = new Date().getHours()
@@ -14,12 +13,12 @@ function Dashboard() {
   const firstName = user?.firstName
 
   return (
-    <div className="page">
-      <h1 className="page__title">
+    <div>
+      <h1 className="font-heading text-[clamp(26px,3vw,30px)] font-semibold tracking-[-0.01em]">
         {greeting()}
         {firstName ? `, ${firstName}` : ''}.
       </h1>
-      <p className="page__subtitle">Your money, at a glance.</p>
+      <p className="mt-1.5 text-muted-foreground">Your money, at a glance.</p>
     </div>
   )
 }

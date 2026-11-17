@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import Modal from './Modal'
+import { Button } from '@/components/ui/button'
+import { FormActions, FormError } from './form'
 
 type Props = {
   name: string
+  question?: string // replaces "Are you sure you want to delete “name”?"
   kindLabel: string // "category" or "income source"
   details?: string // short extra line, e.g. "$50.00 · Thu, Nov 12"
   onClose: () => void
@@ -15,7 +18,7 @@ type Props = {
 }
 
 // "Are you sure?" popup. If the item is in use, offers archiving instead.
-function DeleteModal({ name, kindLabel, details, onClose, onDelete, onArchive }: Props) {
+function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, onArchive }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -35,38 +38,41 @@ function DeleteModal({ name, kindLabel, details, onClose, onDelete, onArchive }:
 
   return (
     <Modal onClose={onClose}>
-      <div className="delete-modal">
-        <span className="delete-modal__icon" aria-hidden>
+      <div className="text-center">
+        <span
+          className="mx-auto mt-2 mb-4 grid size-[72px] place-items-center rounded-full bg-destructive/10 text-destructive"
+          aria-hidden
+        >
           <Trash2 size={26} />
         </span>
-        <h2 className="delete-modal__title">Are you sure you want to delete “{name}”?</h2>
+        <h2 className="mb-3 font-heading text-2xl font-semibold wrap-anywhere">
+          {question ?? `Are you sure you want to delete “${name}”?`}
+        </h2>
 
         {error ? (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <FormError role="alert">{error}</FormError>
         ) : (
-          <p className="delete-modal__note">
+          <p className="mt-2 mb-6 text-sm text-muted-foreground">
             {details
               ? `${details}. This can't be undone.`
               : `This will permanently delete the ${kindLabel}. It can't be undone.`}
           </p>
         )}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <FormActions>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
           {error && onArchive ? (
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={archive}>
+            <Button type="button" size="lg" disabled={busy} onClick={archive}>
               Archive instead
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={remove}>
+            <Button type="button" variant="destructive" size="lg" disabled={busy} onClick={remove}>
               Delete
-            </button>
+            </Button>
           )}
-        </div>
+        </FormActions>
       </div>
     </Modal>
   )

@@ -3,6 +3,8 @@ import Modal from '../Modal'
 import { balanceText, toStoredBalance } from '../../lib/accountBalance'
 import { formatMoney } from '../../lib/money'
 import type { Account } from '../../lib/types'
+import { Button } from '@/components/ui/button'
+import { Field, FieldLabel, FormActions, FormError, Input } from '../form'
 
 type Props = {
   account: Account
@@ -49,45 +51,46 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
   return (
     <Modal title="Reconcile balance" onClose={onClose}>
       <form onSubmit={submit}>
-        <p className="reconcile__current">
-          In Nayad: <strong>{balanceText(account.type, account.currentBalance)}</strong>
+        <p className="mb-[18px] text-muted-foreground">
+          In Nayad:{' '}
+          <strong className="text-foreground tabular-nums">
+            {balanceText(account.type, account.currentBalance)}
+          </strong>
         </p>
 
-        <label className="form-field">
-          <span className="form-field__label">
+        <Field>
+          <FieldLabel>
             {isCard ? 'Amount owed, according to your bank' : 'Balance, according to your bank'}
-          </span>
-          <input
-            className="form-input"
+          </FieldLabel>
+          <Input
             value={entered}
             inputMode="decimal"
             placeholder="0.00"
             autoFocus
             onChange={(e) => setEntered(e.target.value)}
           />
-        </label>
+        </Field>
 
         {preview() && (
-          <p className="reconcile__preview" aria-live="polite">
+          <p
+            className="mb-[18px] rounded-[10px] bg-muted px-3.5 py-3 text-sm text-foreground/80"
+            aria-live="polite"
+          >
             {preview()} It's recorded as a balance adjustment dated today, so your history stays
             intact.
           </p>
         )}
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <FormActions>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
-          <button type="submit" className="btn btn--primary" disabled={!diff || saving}>
+          </Button>
+          <Button type="submit" size="lg" disabled={!diff || saving}>
             Add adjustment
-          </button>
-        </div>
+          </Button>
+        </FormActions>
       </form>
     </Modal>
   )

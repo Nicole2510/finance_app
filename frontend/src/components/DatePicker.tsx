@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { useLayoutEffect, useRef, useState, type ComponentProps } from 'react'
+import { CalendarDays, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatDate } from '../lib/dates'
+import { inputClasses } from '../lib/formStyles'
 import { useDismiss } from '../lib/useDismiss'
-import './DatePicker.css'
 
 type Props = {
   value: string // "YYYY-MM-DD"
@@ -43,40 +44,84 @@ function daysFor(year: number, month: number) {
   })
 }
 
-// A date field that drops down a calendar. Clicking a day only highlights it;
-// Confirm applies it, and Close, Escape or clicking outside leave the date as it was.
+// A month or year pill: the browser's arrow is hidden and a centred one drawn instead
+function MonthYearSelect(props: ComponentProps<'select'>) {
+  return (
+    <span className="relative">
+      <select
+        className="cursor-pointer appearance-none rounded-full border-none bg-muted py-[7px] pr-8 pl-3.5 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        {...props}
+      />
+      <ChevronDown
+        size={16}
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
+      />
+    </span>
+  )
+}
+
+// The nearest parent that scrolls (e.g. a popup's content), if any
+function scrollParent(el: HTMLElement | null) {
+  for (let node = el?.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node)
+    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight)
+      return node
+  }
+  return null
+}
+
+// A date field that drops down a calendar. Clicking a day picks it and closes the
+// calendar; Escape or clicking outside close it and leave the date as it was.
 function DatePicker({ value, onChange, min, max }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(() => parse(value)) // which month is showing
-  const [draft, setDraft] = useState(value) // highlighted day, not saved until Confirm
   useDismiss(ref, open, () => setOpen(false))
 
   // The calendar floats (position: fixed) so it never stretches the form.
-  // It drops down from the field, or opens upwards if there's no room below,
-  // with a little pointer aimed at the field. It's placed by setting its style
+  // It always drops down below the field, with a little pointer aimed at it.
+  // If there's no room below, the form scrolls up first to make room; on a
+  // very short screen it sits as low as it can and hides the pointer, so the
+  // pointer never aims at a different field. It's placed by setting its style
   // directly: this is measuring the page, not app data, so it doesn't need
   // React state. Runs again on scroll and resize.
   useLayoutEffect(() => {
     if (!open) return
+    const gap = 12
+    const edge = 8 // keep this far from the window's edges
 
     function place() {
       const field = fieldRef.current?.getBoundingClientRect()
       const panel = panelRef.current
       if (!field || !panel) return
-      const gap = 12
-      const edge = 8 // keep this far from the window's edges
 
-      const fitsBelow = field.bottom + gap + panel.offsetHeight <= window.innerHeight - edge
-      const top = fitsBelow ? field.bottom + gap : field.top - gap - panel.offsetHeight
-      const left = Math.max(edge, Math.min(field.left, window.innerWidth - panel.offsetWidth - edge))
+      const below = field.bottom + gap
+      const top = Math.max(edge, Math.min(below, window.innerHeight - edge - panel.offsetHeight))
+      const left = Math.max(
+        edge,
+        Math.min(field.left, window.innerWidth - panel.offsetWidth - edge),
+      )
 
-      panel.style.top = `${Math.max(edge, top)}px`
+      panel.style.top = `${top}px`
       panel.style.left = `${left}px`
       panel.style.setProperty('--pointer-x', `${field.left + 28 - left}px`)
-      panel.classList.toggle('is-above', !fitsBelow)
+      panel.classList.toggle('no-pointer', top !== below)
+    }
+
+    // On opening only (not while you scroll), make room below if needed
+    const field = fieldRef.current
+    const panel = panelRef.current
+    if (field && panel) {
+      const short =
+        field.getBoundingClientRect().bottom +
+        gap +
+        panel.offsetHeight -
+        (window.innerHeight - edge)
+      const scroller = scrollParent(field)
+      if (short > 0 && scroller) scroller.scrollTop += short
     }
 
     place()
@@ -109,20 +154,14 @@ function DatePicker({ value, onChange, min, max }: Props) {
     setView({ year, month, day: 1 })
   }
 
-  function highlight(key: string) {
-    setDraft(key)
-    const { year, month } = parse(key)
-    if (month !== view.month) setView({ year, month, day: 1 }) // a greyed-out day from next door
-  }
-
-  function confirm() {
-    onChange(draft)
+  function pick(key: string) {
+    onChange(key)
     setOpen(false)
   }
 
   return (
     <div
-      className="date-picker"
+      className="relative"
       ref={ref}
       // Escape closes just the calendar, not the modal it sits in
       onKeyDown={(e) => {
@@ -136,13 +175,13 @@ function DatePicker({ value, onChange, min, max }: Props) {
       <button
         type="button"
         ref={fieldRef}
-        className="form-input date-picker__field"
+        className={cn(
+          inputClasses,
+          'flex w-full cursor-pointer items-center justify-between text-left [&>svg]:text-muted-foreground',
+        )}
         aria-expanded={open}
         onClick={() => {
-          if (!open) {
-            setView(parse(value))
-            setDraft(value)
-          }
+          if (!open) setView(parse(value))
           setOpen(!open)
         }}
       >
@@ -151,10 +190,19 @@ function DatePicker({ value, onChange, min, max }: Props) {
       </button>
 
       {open && (
-        <div ref={panelRef} className="date-picker__panel" role="group" aria-label="Choose a date">
-          <div className="date-picker__header">
-            <select
-              className="form-select date-picker__select"
+        <div
+          ref={panelRef}
+          role="group"
+          aria-label="Choose a date"
+          className={cn(
+            // Floats above everything; the effect above sets top, left and --pointer-x
+            'fixed z-20 w-[340px] max-w-[calc(100vw-16px)] rounded-[20px] bg-card px-4 pt-[18px] pb-4 shadow-[0_18px_40px_-12px_rgba(30,27,46,0.3)] max-[420px]:px-2.5 max-[420px]:pt-3.5 max-[420px]:pb-3',
+            // The little pointer aimed at the date field (hidden by "no-pointer")
+            "before:absolute before:-top-[7px] before:left-[calc(var(--pointer-x,28px)-7px)] before:size-3.5 before:rotate-45 before:rounded-[3px] before:bg-card before:content-[''] [&.no-pointer]:before:hidden",
+          )}
+        >
+          <div className="mb-3 flex justify-center gap-2">
+            <MonthYearSelect
               aria-label="Month"
               value={view.month}
               onChange={(e) => setView({ ...view, month: Number(e.target.value) })}
@@ -164,9 +212,8 @@ function DatePicker({ value, onChange, min, max }: Props) {
                   {name}
                 </option>
               ))}
-            </select>
-            <select
-              className="form-select date-picker__select"
+            </MonthYearSelect>
+            <MonthYearSelect
               aria-label="Year"
               value={view.year}
               onChange={(e) => showYear(Number(e.target.value))}
@@ -176,12 +223,15 @@ function DatePicker({ value, onChange, min, max }: Props) {
                   {year}
                 </option>
               ))}
-            </select>
+            </MonthYearSelect>
           </div>
 
-          <div className="date-picker__grid">
+          <div className="grid grid-cols-7 gap-1 text-center">
             {WEEKDAYS.map((w) => (
-              <span key={w} className="date-picker__weekday">
+              <span
+                key={w}
+                className="mb-1 border-b border-border pt-1.5 pb-2.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground"
+              >
                 {w}
               </span>
             ))}
@@ -189,25 +239,21 @@ function DatePicker({ value, onChange, min, max }: Props) {
               <button
                 key={key}
                 type="button"
-                className={`date-picker__day${inMonth ? '' : ' is-outside'}${key === draft ? ' is-selected' : ''}`}
+                className={cn(
+                  'size-[38px] cursor-pointer justify-self-center rounded-full border-none bg-transparent text-sm font-semibold text-foreground tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[420px]:size-[34px]',
+                  !inMonth && 'font-normal text-muted-foreground opacity-60',
+                  key === value ? 'bg-primary text-white' : 'enabled:hover:bg-accent',
+                  'disabled:cursor-default disabled:font-normal disabled:text-border',
+                )}
                 aria-label={formatDate(key)}
-                aria-pressed={key === draft}
+                aria-pressed={key === value}
                 // String comparison works because "YYYY-MM-DD" sorts like a date
                 disabled={(!!max && key > max) || (!!min && key < min)}
-                onClick={() => highlight(key)}
+                onClick={() => pick(key)}
               >
                 {String(day).padStart(2, '0')}
               </button>
             ))}
-          </div>
-
-          <div className="date-picker__actions">
-            <button type="button" className="date-picker__close" onClick={() => setOpen(false)}>
-              Close
-            </button>
-            <button type="button" className="date-picker__confirm" onClick={confirm}>
-              Confirm
-            </button>
           </div>
         </div>
       )}

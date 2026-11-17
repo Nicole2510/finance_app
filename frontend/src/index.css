@@ -1,71 +1,111 @@
-/* Nayad design tokens — warm neutral palette from the design target */
+/* Layer order: Clerk's sign-in styles sit above Tailwind's resets but below
+   our components and utilities, so Tailwind classes can style Clerk's forms */
+@layer theme, base, clerk, components, utilities;
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/geist';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Nayad design tokens: cool lavender palette with a violet accent.
+   shadcn's names (primary, muted…) point at these, and Tailwind classes like
+   bg-primary or text-muted-foreground come from them. */
 :root {
-  --espresso: #2f2724;
-  --espresso-soft: #4a3f3a;
-  --taupe: #8c7b73;
-  --sand: #e8dfd8;
-  --cream: #f6f1ec;
-  --surface: #ffffff;
-  --app-bg: #faf7f4;
-  --highlight: #f1e9e2;
-  --blush: #e6b8b2;
-  --rose: #d98a80;
-  --sage: #7d9a82;
-  --forest: #2f5d46;
+  /* The palette */
+  --violet: #6d3fd0;
+  --violet-strong: #5a2fb8;
+  --ink: #1e1b2e;
+  --ink-soft: #3b3654;
+  --slate: #6b6880;
+  --line: #e7e4f0;
+  --lavender: #f3f0fa;
+  --lavender-deep: #ebe5fa;
+  --mist: #f7f5fc;
+  --green: #2f8a5b;
+  --red: #b84653;
 
-  --text: var(--espresso);
-  --text-muted: var(--taupe);
-  --border: var(--sand);
+  --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --shadow-soft: 0 12px 32px -16px rgba(47, 39, 36, 0.22);
-
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  /* Headings and the logo; swap in a serif here to change them everywhere */
-  --font-display: var(--font-sans);
+  /* shadcn/ui names */
+  --background: #ffffff;
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--violet);
+  --primary-foreground: #ffffff;
+  --secondary: var(--lavender);
+  --secondary-foreground: var(--ink);
+  --muted: var(--lavender);
+  --muted-foreground: var(--slate);
+  --accent: var(--lavender-deep);
+  --accent-foreground: var(--ink);
+  --destructive: var(--red);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--violet);
+  --chart-1: #6d3fd0;
+  --chart-2: #9b7be3;
+  --chart-3: #2f8a5b;
+  --chart-4: #d06a75;
+  --chart-5: #e0a54b;
+  --radius: 0.625rem;
+  --sidebar: var(--mist);
+  --sidebar-foreground: var(--ink-soft);
+  --sidebar-primary: var(--violet);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--lavender-deep);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--violet);
 
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--text);
-  background: var(--app-bg);
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* Page-wide basics, in Tailwind's base layer so Tailwind classes (like mb-5)
+   can override them; outside a layer they would always win */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-}
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
 
-#root {
-  min-height: 100vh;
-}
+  #root {
+    min-height: 100vh;
+  }
 
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
 
-h1,
-h2,
-h3 {
-  line-height: 1.15;
-}
+  h1,
+  h2,
+  h3 {
+    line-height: 1.15;
+  }
 
-img {
-  max-width: 100%;
-  display: block;
+  img {
+    max-width: 100%;
+    display: block;
+  }
 }
 
 /* Thin, rounded scrollbars in our palette instead of the browser's default.
@@ -73,7 +113,7 @@ img {
    covers Safari. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--sand) transparent;
+  scrollbar-color: var(--line) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -88,9 +128,87 @@ img {
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: var(--sand) padding-box;
+  background: var(--line) padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--taupe) padding-box;
+  background: var(--slate) padding-box;
+}
+
+/* On the first sign-in / sign-up step our page heading is enough, so hide
+   Clerk's. Later steps (e.g. "Check your email") keep theirs for context. */
+@layer components {
+  .cl-signIn-start .cl-header,
+  .cl-signUp-start .cl-header {
+    display: none;
+  }
+}
+
+/* A toast's countdown bar: shrinks over 5 seconds, then the toast closes */
+@theme {
+  --animate-toast-timer: toast-timer 5s linear forwards;
+
+  @keyframes toast-timer {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

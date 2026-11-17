@@ -2,7 +2,6 @@ import { Search } from 'lucide-react'
 import { accountTypes } from '../../lib/accountTypes'
 import type { AccountType } from '../../lib/types'
 import FilterSelect from '../FilterSelect'
-import './AccountFilters.css'
 
 export type TypeFilter = AccountType | 'ALL'
 
@@ -16,10 +15,11 @@ type Props = {
 // Search box and account-type filter; the page owns the values
 function AccountFilters({ search, type, onSearchChange, onTypeChange }: Props) {
   return (
-    <div className="account-filters">
-      <label className="account-filters__search">
+    <div className="mb-2 flex gap-2 border-b border-border pb-3">
+      <label className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-muted px-3.5 text-muted-foreground focus-within:ring-3 focus-within:ring-primary/20">
         <Search size={18} aria-hidden />
         <input
+          className="min-w-0 flex-1 border-none bg-transparent py-3 text-foreground outline-none placeholder:text-muted-foreground"
           type="search"
           value={search}
           placeholder="Search"

@@ -2,8 +2,8 @@ import { Navigate, Route, Routes } from 'react-router'
 import ProtectedLayout from './components/ProtectedLayout'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
-import Profile from './pages/Profile'
 import ComingSoon from './pages/ComingSoon'
+import Settings from './pages/Settings'
 import Categories from './pages/Categories'
 import Accounts from './pages/Accounts'
 import Transactions from './pages/Transactions'
@@ -22,12 +22,13 @@ function App() {
       {/* Pages below require sign-in */}
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
+        {/* The profile now lives in Settings */}
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/accounts/:id?" element={<Accounts />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/budgets" element={<ComingSoon title="Budgets" />} />
         <Route path="/debts" element={<ComingSoon title="Debts & Loans" />} />
-        <Route path="/settings" element={<ComingSoon title="Settings" />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/categories" element={<Categories />} />
       </Route>
 

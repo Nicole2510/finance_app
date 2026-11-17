@@ -7,25 +7,84 @@ import ItemRow from '../components/ItemRow'
 import ItemFormModal, { type ItemKind, type ItemValues } from '../components/ItemFormModal'
 import DeleteModal from '../components/DeleteModal'
 import PageHeader from '../components/PageHeader'
-import './Page.css'
-import './Categories.css'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { groupTint } from '../lib/groupTints'
+import { FormError } from '../components/form'
 
 type TileId = CategoryGroup | 'SOURCES'
 
+// The white box the items in a group are listed in
+const itemList = 'mb-4 list-none rounded-[14px] bg-card px-2 py-1'
+
+// Tints for the "What would you like to add?" choices
+const CHOICE_TINT: Record<ItemKind, string> = {
+  expense: groupTint.needs,
+  income: groupTint.income,
+  source: groupTint.savings,
+}
+
 const TILES: { id: TileId; label: string; emoji: string; hint: string; addLabel: string }[] = [
-  { id: 'NEEDS', label: 'Needs', emoji: '🛒', hint: 'The essentials for everyday life.', addLabel: 'Add category to Needs' },
-  { id: 'WANTS', label: 'Wants', emoji: '🛍️', hint: 'The fun stuff that makes life sweet.', addLabel: 'Add category to Wants' },
-  { id: 'SAVINGS', label: 'Savings', emoji: '🐷', hint: 'Money set aside for later. Future you says thanks.', addLabel: 'Add category to Savings' },
-  { id: 'DEBT', label: 'Debt', emoji: '💳', hint: 'Paying down what you owe.', addLabel: 'Add category to Debt' },
-  { id: 'INVESTMENTS', label: 'Investments', emoji: '📈', hint: 'Growing your money over time.', addLabel: 'Add category to Investments' },
-  { id: 'INCOME', label: 'Income', emoji: '🪙', hint: 'The kinds of money coming in.', addLabel: 'Add income category' },
-  { id: 'SOURCES', label: 'Income Sources', emoji: '🏛️', hint: 'Who pays you, like an employer or client.', addLabel: 'Add income source' },
+  {
+    id: 'NEEDS',
+    label: 'Needs',
+    emoji: '🛒',
+    hint: 'The essentials for everyday life.',
+    addLabel: 'Add category to Needs',
+  },
+  {
+    id: 'WANTS',
+    label: 'Wants',
+    emoji: '🛍️',
+    hint: 'The fun stuff that makes life sweet.',
+    addLabel: 'Add category to Wants',
+  },
+  {
+    id: 'SAVINGS',
+    label: 'Savings',
+    emoji: '🐷',
+    hint: 'Money set aside for later. Future you says thanks.',
+    addLabel: 'Add category to Savings',
+  },
+  {
+    id: 'DEBT',
+    label: 'Debt',
+    emoji: '💳',
+    hint: 'Paying down what you owe.',
+    addLabel: 'Add category to Debt',
+  },
+  {
+    id: 'INVESTMENTS',
+    label: 'Investments',
+    emoji: '📈',
+    hint: 'Growing your money over time.',
+    addLabel: 'Add category to Investments',
+  },
+  {
+    id: 'INCOME',
+    label: 'Income',
+    emoji: '🪙',
+    hint: 'The kinds of money coming in.',
+    addLabel: 'Add income category',
+  },
+  {
+    id: 'SOURCES',
+    label: 'Income Sources',
+    emoji: '🏛️',
+    hint: 'Who pays you, like an employer or client.',
+    addLabel: 'Add income source',
+  },
 ]
 
 const ADD_CHOICES: { kind: ItemKind; emoji: string; title: string; hint: string }[] = [
   { kind: 'expense', emoji: '🛒', title: 'Expense category', hint: 'For your everyday spending' },
   { kind: 'income', emoji: '🪙', title: 'Income category', hint: 'For money coming in' },
-  { kind: 'source', emoji: '🏛️', title: 'Income source', hint: 'Who pays you, like an employer or client' },
+  {
+    kind: 'source',
+    emoji: '🏛️',
+    title: 'Income source',
+    hint: 'Who pays you, like an employer or client',
+  },
 ]
 
 type Item = Category | IncomeSource
@@ -64,7 +123,7 @@ function Categories() {
   }, [apiFetch])
 
   if (!categories || !sources) {
-    return loadError ? <p className="form-error">{loadError}</p> : <p>Loading...</p>
+    return loadError ? <FormError>{loadError}</FormError> : <p>Loading...</p>
   }
 
   function itemsFor(tile: TileId): Item[] {
@@ -140,14 +199,14 @@ function Categories() {
   }
 
   return (
-    <div className="page categories">
+    <div>
       <PageHeader title="Categories">
-        <button type="button" className="btn btn--primary categories__add" onClick={() => setPopup({ type: 'choose' })}>
+        <Button type="button" onClick={() => setPopup({ type: 'choose' })}>
           <Plus size={18} /> Add
-        </button>
+        </Button>
       </PageHeader>
 
-      <div className="tiles">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,220px),1fr))] gap-4 max-[480px]:grid-cols-2 max-[480px]:gap-3">
         {TILES.map((t) => {
           const count = itemsFor(t.id).filter((i) => i.archivedAt === null).length
           const noun = t.id === 'SOURCES' ? 'source' : 'category'
@@ -156,17 +215,26 @@ function Categories() {
             <button
               key={t.id}
               type="button"
-              className={`tile tile--${t.id.toLowerCase()}`}
+              className={cn(
+                'group flex cursor-pointer flex-col items-center gap-1 rounded-[14px] border-none px-4 py-8 text-foreground transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-xl hover:shadow-primary/10 max-[480px]:px-2 max-[480px]:py-6',
+                groupTint[t.id.toLowerCase()],
+              )}
               onClick={() => {
                 setShowArchived(false)
                 setOpenTile(t.id)
               }}
             >
-              <span className="tile__icon" aria-hidden>
+              {/* A playful tilt on hover */}
+              <span
+                className="mb-3 grid size-[84px] place-items-center rounded-full bg-white/55 text-[40px] transition-transform duration-200 group-hover:scale-[1.08] group-hover:-rotate-8 max-[480px]:size-16 max-[480px]:text-[30px]"
+                aria-hidden
+              >
                 {t.emoji}
               </span>
-              <span className="tile__label">{t.label}</span>
-              <span className="tile__count">
+              <span className="font-heading text-2xl max-[480px]:text-center max-[480px]:text-[19px]">
+                {t.label}
+              </span>
+              <span className="text-muted-foreground">
                 {count} {count === 1 ? noun : plural}
               </span>
             </button>
@@ -176,35 +244,47 @@ function Categories() {
 
       {tile && (
         <Modal variant="wide" title={tile.label} onClose={() => setOpenTile(null)}>
-          <span className={`panel__icon tile--${tile.id.toLowerCase()}`} aria-hidden>
+          <span
+            className={cn(
+              '-mt-1 mb-3 grid size-[72px] place-items-center rounded-[20px] text-[34px]',
+              groupTint[tile.id.toLowerCase()],
+            )}
+            aria-hidden
+          >
             {tile.emoji}
           </span>
-          <p className="panel__hint">{tile.hint}</p>
+          <p className="-mt-3 mb-6 text-muted-foreground">{tile.hint}</p>
 
-          <p className="panel__section-label">
+          <p className="mb-2 text-sm text-muted-foreground">
             {tile.id === 'SOURCES' ? 'Sources' : 'Categories'} ({activeItems.length})
           </p>
           {activeItems.length > 0 ? (
-            <ul className="panel__list">{activeItems.map(row)}</ul>
+            <ul className={itemList}>{activeItems.map(row)}</ul>
           ) : (
-            <p className="panel__empty">Nothing here yet. Add your first one below.</p>
+            <p className="mb-4 rounded-[14px] bg-card p-5 text-center text-muted-foreground">
+              Nothing here yet. Add your first one below.
+            </p>
           )}
 
-          <button type="button" className="panel__add" onClick={() => addFromTile(tile.id)}>
+          <button
+            type="button"
+            onClick={() => addFromTile(tile.id)}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-none bg-accent p-4 text-foreground hover:bg-primary/15"
+          >
             <Plus size={18} /> {tile.addLabel}
           </button>
 
           {archivedItems.length > 0 && (
-            <div className="panel__archived">
+            <div className="mt-6">
               <button
                 type="button"
-                className="panel__archived-toggle"
+                className="mb-2 cursor-pointer border-none bg-transparent py-1 text-sm text-muted-foreground underline underline-offset-3"
                 aria-expanded={showArchived}
                 onClick={() => setShowArchived((s) => !s)}
               >
                 {showArchived ? 'Hide' : 'Show'} archived ({archivedItems.length})
               </button>
-              {showArchived && <ul className="panel__list">{archivedItems.map(row)}</ul>}
+              {showArchived && <ul className={itemList}>{archivedItems.map(row)}</ul>}
             </div>
           )}
         </Modal>
@@ -212,21 +292,27 @@ function Categories() {
 
       {popup?.type === 'choose' && (
         <Modal title="Add" onClose={() => setPopup(null)}>
-          <p className="choose__intro">What would you like to add?</p>
-          <div className="choose__list">
+          <p className="-mt-2 mb-5 text-muted-foreground">What would you like to add?</p>
+          <div className="flex flex-col gap-3">
             {ADD_CHOICES.map((choice) => (
               <button
                 key={choice.kind}
                 type="button"
-                className={`choose__option choose__option--${choice.kind}`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-4 rounded-[14px] border-none p-[18px] text-left text-foreground transition-transform hover:translate-x-1',
+                  CHOICE_TINT[choice.kind],
+                )}
                 onClick={() => setPopup({ type: 'form', kind: choice.kind })}
               >
-                <span className="choose__emoji" aria-hidden>
+                <span
+                  className="grid size-[52px] shrink-0 place-items-center rounded-full bg-white/60 text-[26px]"
+                  aria-hidden
+                >
                   {choice.emoji}
                 </span>
                 <span>
-                  <span className="choose__title">{choice.title}</span>
-                  <span className="choose__hint">{choice.hint}</span>
+                  <span className="block font-medium">{choice.title}</span>
+                  <span className="block text-sm text-muted-foreground">{choice.hint}</span>
                 </span>
               </button>
             ))}

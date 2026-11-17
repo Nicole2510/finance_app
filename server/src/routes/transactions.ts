@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
-import { Prisma, type Transaction } from "@prisma/client";
+import {
+  Prisma,
+  type Account,
+  type Category,
+  type IncomeSource,
+  type Transaction,
+} from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
@@ -11,7 +17,7 @@ export const transactionsRouter = Router();
 transactionsRouter.use(requireUser);
 
 // Validate transaction details before saving, ensuring positive amounts and optional notes.
-const createSchema = z.strictObject({
+export const createSchema = z.strictObject({
   type: z.enum(["INCOME", "EXPENSE"]),
   amount: moneySchema.refine((value) => Number(value) > 0, "amount must be above zero"),
   date: dateSchema,
@@ -24,20 +30,25 @@ const createSchema = z.strictObject({
 // Edits: any of the same fields; incomeSourceId: null removes the source
 const updateSchema = createSchema.partial();
 
-const listSchema = z.object({
-  limit: z.coerce
-    .number()
-    .int("Limit must be a whole number")
-    .min(1, "Limit must be at least 1")
-    .max(50, "Limit cannot exceed 50")
-    .optional(),
-  month: z
-    .string()
-    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
-    .optional(),
-  accountId: z.uuid().optional(),
-  categoryId: z.uuid().optional(),
-});
+const listSchema = z
+  .object({
+    limit: z.coerce
+      .number()
+      .int("Limit must be a whole number")
+      .min(1, "Limit must be at least 1")
+      .max(50, "Limit cannot exceed 50")
+      .optional(),
+    month: z
+      .string()
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
+      .optional(),
+    accountId: z.uuid().optional(),
+    categoryId: z.uuid().optional(),
+    // A date range (both days included), across months. Used instead of month.
+    from: dateSchema.optional(),
+    to: dateSchema.optional(),
+  })
+  .refine((q) => !q.from || !q.to || q.from <= q.to, "The start date must be before the end date");
 
 // Related records each transaction is sent with, so the UI can show their names
 const related = {
@@ -71,63 +82,70 @@ function monthRange(month: string) {
   };
 }
 
-type References = Pick<
+export type References = Pick<
   z.infer<typeof createSchema>,
   "type" | "date" | "accountId" | "categoryId" | "incomeSourceId"
 >;
 
 type Kept = Pick<Transaction, "accountId" | "categoryId" | "incomeSourceId">;
 
-// Checks that everything a transaction points to belongs to this user, is still
-// active, and fits together. Someone else's record gets the same message as a
-// missing one, so this can't be used to discover what other users have.
+type Found = {
+  account: Account | null;
+  category: Category | null;
+  source: IncomeSource | null;
+};
+
+// The rules a transaction's account, category and income source must follow.
+// Returns what's wrong, or null if it's fine. Kept apart from loading so the
+// importer can check thousands of rows against records it loaded once.
 // When editing, `kept` is the transaction as it was: records it already used
 // may have been archived since, and that's fine, so old transactions stay editable.
-async function assertValidReferences(userId: string, data: References, kept?: Kept) {
-  const activeUnless = (id: string, keptId: string | null | undefined) =>
-    id === keptId ? {} : { archivedAt: null };
+export function checkReferences(data: References, found: Found, kept?: Kept): string | null {
+  const usable = <T extends { id: string; archivedAt: Date | null }>(
+    record: T | null,
+    keptId: string | null | undefined,
+  ) => (record && (record.archivedAt === null || record.id === keptId) ? record : null);
 
-  const [account, category, source] = await Promise.all([
-    prisma.account.findFirst({
-      where: { id: data.accountId, userId, ...activeUnless(data.accountId, kept?.accountId) },
-    }),
-    prisma.category.findFirst({
-      where: { id: data.categoryId, userId, ...activeUnless(data.categoryId, kept?.categoryId) },
-    }),
-    data.incomeSourceId
-      ? prisma.incomeSource.findFirst({
-          where: {
-            id: data.incomeSourceId,
-            userId,
-            ...activeUnless(data.incomeSourceId, kept?.incomeSourceId),
-          },
-        })
-      : null,
-  ]);
+  const account = usable(found.account, kept?.accountId);
+  const category = usable(found.category, kept?.categoryId);
+  const source = usable(found.source, kept?.incomeSourceId);
 
-  if (!account) throw new HttpError(400, "Choose an active account");
-  if (!category) throw new HttpError(400, "Choose an active category");
+  if (!account) return "Choose an active account";
+  if (!category) return "Choose an active category";
 
   if ((data.type === "INCOME") !== (category.group === "INCOME")) {
-    throw new HttpError(400, "That category doesn't match this type of transaction");
+    return "That category doesn't match this type of transaction";
   }
 
   if (data.incomeSourceId) {
-    if (data.type !== "INCOME") {
-      throw new HttpError(400, "Only income can have an income source");
-    }
-    if (!source) throw new HttpError(400, "Choose an active income source");
+    if (data.type !== "INCOME") return "Only income can have an income source";
+    if (!source) return "Choose an active income source";
   }
 
-  // Earlier days are already included in the opening balance
-  if (new Date(data.date) < account.openingDate) {
-    throw new HttpError(400, "The date can't be before the account's opening date");
-  }
+  // Dates before the account's opening date are allowed: they're kept as
+  // history (in that month's lists and totals) but don't change the balance,
+  // which already includes them through the opening balance
+  return null;
+}
+
+// Loads what a transaction points to (only this user's records, so someone
+// else's gets the same message as a missing one), then checks the rules
+async function assertValidReferences(userId: string, data: References, kept?: Kept) {
+  const [account, category, source] = await Promise.all([
+    prisma.account.findFirst({ where: { id: data.accountId, userId } }),
+    prisma.category.findFirst({ where: { id: data.categoryId, userId } }),
+    data.incomeSourceId
+      ? prisma.incomeSource.findFirst({ where: { id: data.incomeSourceId, userId } })
+      : null,
+  ]);
+
+  const problem = checkReferences(data, { account, category, source }, kept);
+  if (problem) throw new HttpError(400, problem);
 }
 
 // Marks accounts as updated now. Called alongside every change to their
 // transactions, so an account's "updated" time reflects its latest activity.
-function touchAccounts(userId: string, accountIds: string[]) {
+export function touchAccounts(userId: string, accountIds: string[]) {
   return prisma.account.updateMany({
     where: { id: { in: accountIds }, userId },
     data: { updatedAt: new Date() },
@@ -136,12 +154,19 @@ function touchAccounts(userId: string, accountIds: string[]) {
 
 // GET /api/transactions?month=2026-10&accountId=...&categoryId=...
 transactionsRouter.get("/", async (req, res) => {
-  const { month, accountId, categoryId, limit } = parseBody(listSchema, req.query);
+  const { month, accountId, categoryId, limit, from, to } = parseBody(listSchema, req.query);
+  // "YYYY-MM-DD" strings compare like dates, and the column holds days only
+  const range =
+    from || to
+      ? { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) }
+      : month
+        ? monthRange(month)
+        : undefined;
 
   const transactions = await prisma.transaction.findMany({
     where: {
       userId: req.user!.id,
-      ...(month ? { date: monthRange(month) } : {}),
+      ...(range ? { date: range } : {}),
       ...(accountId ? { accountId } : {}),
       ...(categoryId ? { categoryId } : {}),
     },
@@ -167,6 +192,34 @@ transactionsRouter.post("/", async (req, res) => {
     touchAccounts(userId, [data.accountId]),
   ]);
   res.status(201).json(toJson(transaction));
+});
+
+const bulkDeleteSchema = z.strictObject({
+  ids: z
+    .array(z.uuid())
+    .min(1, "Choose at least one transaction")
+    .max(500, "Delete at most 500 transactions at a time"),
+});
+
+// POST /api/transactions/bulk-delete  { ids: [...] }
+// Deletes several transactions together, or none: if any id isn't one of this
+// user's transactions, nothing is deleted (and it's a 404, like a single delete)
+transactionsRouter.post("/bulk-delete", async (req, res) => {
+  const userId = req.user!.id;
+  const ids = [...new Set(parseBody(bulkDeleteSchema, req.body).ids)];
+
+  const owned = await prisma.transaction.findMany({
+    where: { id: { in: ids }, userId },
+    select: { accountId: true },
+  });
+  if (owned.length !== ids.length)
+    throw new HttpError(404, "Some of those transactions weren't found");
+
+  const [deleted] = await prisma.$transaction([
+    prisma.transaction.deleteMany({ where: { id: { in: ids }, userId } }),
+    touchAccounts(userId, [...new Set(owned.map((t) => t.accountId))]),
+  ]);
+  res.json({ deleted: deleted.count });
 });
 
 // Finds a transaction only if it belongs to this user; otherwise 404
