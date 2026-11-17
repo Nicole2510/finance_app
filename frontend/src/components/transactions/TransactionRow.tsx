@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { Transaction } from '../../lib/types'
+import { groupTint } from '../../lib/groupTints'
 import { dayLabel } from '../../lib/dates'
 import { describeTransaction } from '../../lib/transactionDisplay'
 
@@ -8,17 +9,6 @@ type Props = {
   onSelect: () => void
   checked: boolean
   onCheck: () => void
-}
-
-// Group pill tints, matching the Categories page tiles
-const PILL_BG: Record<string, string> = {
-  needs: 'bg-[#f6ebdf]',
-  wants: 'bg-[#f6e3e1]',
-  savings: 'bg-[#e5ebe2]',
-  debt: 'bg-[#f3e9df]',
-  investments: 'bg-[#e3eaec]',
-  income: 'bg-[#e8e7f0]',
-  adjustment: 'bg-border',
 }
 
 // Cells shown only on wider screens; on phones the date and account move
@@ -91,7 +81,7 @@ function TransactionRow({ transaction: t, onSelect, checked, onCheck }: Props) {
           <span
             className={cn(
               'inline-block rounded-full px-2.5 py-[3px] text-xs font-medium whitespace-nowrap text-foreground/80',
-              PILL_BG[pill.className],
+              groupTint[pill.className],
             )}
           >
             {pill.label}

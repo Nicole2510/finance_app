@@ -38,18 +38,21 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
 
   return (
     <Modal onClose={onClose}>
-      <div className="delete-modal">
-        <span className="delete-modal__icon" aria-hidden>
+      <div className="text-center">
+        <span
+          className="mx-auto mt-2 mb-4 grid size-[72px] place-items-center rounded-full bg-destructive/10 text-destructive"
+          aria-hidden
+        >
           <Trash2 size={26} />
         </span>
-        <h2 className="delete-modal__title">
+        <h2 className="mb-3 font-heading text-2xl font-semibold wrap-anywhere">
           {question ?? `Are you sure you want to delete “${name}”?`}
         </h2>
 
         {error ? (
           <FormError role="alert">{error}</FormError>
         ) : (
-          <p className="delete-modal__note">
+          <p className="mt-2 mb-6 text-sm text-muted-foreground">
             {details
               ? `${details}. This can't be undone.`
               : `This will permanently delete the ${kindLabel}. It can't be undone.`}
