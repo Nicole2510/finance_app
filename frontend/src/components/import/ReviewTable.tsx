@@ -5,6 +5,8 @@ import { formatDate } from '../../lib/dates'
 import { formatMoney } from '../../lib/money'
 import type { ReviewRow } from '../../lib/import/review'
 import ListPicker from '../ListPicker'
+import { incomeText, table, tableWrap } from './styles'
+import { cn } from '@/lib/utils'
 
 type Props = {
   rows: ReviewRow[]
@@ -21,6 +23,17 @@ const STATUS_LABELS: Record<ReviewRow['status'], string> = {
 }
 
 // Step 4: every transaction, to include or leave out and re-categorise one by one
+// A small grey line under a cell's main text
+const note = 'block max-w-[220px] text-xs whitespace-normal text-muted-foreground'
+
+// Status pill colours
+const STATUS_TINT: Record<string, string> = {
+  ready: 'bg-[#e5ebe2] text-(--green)',
+  skipped: 'bg-border text-foreground/80',
+  duplicate: 'bg-[#f3e9df] text-[#8a5a2b]',
+  problem: 'bg-destructive/10 text-destructive',
+}
+
 function ReviewTable({ rows, categories, accounts, onChange }: Props) {
   const accountOf = (id: string) => accounts.find((a) => a.id === id)
 
@@ -34,18 +47,24 @@ function ReviewTable({ rows, categories, accounts, onChange }: Props) {
   }
 
   return (
-    <div className="import__table-wrap review-table">
-      <table className="import__table">
+    <div
+      className={cn(
+        tableWrap,
+        // Tall lists scroll inside, with the headings pinned on top
+        'max-h-[min(52vh,460px)] overflow-y-auto [&_th]:sticky [&_th]:top-0 [&_th]:z-1',
+      )}
+    >
+      <table className={cn(table, '[&_td]:align-middle')}>
         <thead>
           <tr>
             <th scope="col">
-              <span className="visually-hidden">Import</span>
+              <span className="sr-only">Import</span>
             </th>
             <th scope="col">Date</th>
             <th scope="col">From the file</th>
             <th scope="col">Category</th>
             <th scope="col">Account</th>
-            <th scope="col" className="review-table__amount">
+            <th scope="col" className="text-right!">
               Amount
             </th>
             <th scope="col">Status</th>
@@ -53,7 +72,7 @@ function ReviewTable({ rows, categories, accounts, onChange }: Props) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className={row.include ? undefined : 'is-left-out'}>
+            <tr key={row.id} className={row.include ? undefined : '[&_td]:text-muted-foreground'}>
               <td>
                 <input
                   type="checkbox"
@@ -64,16 +83,18 @@ function ReviewTable({ rows, categories, accounts, onChange }: Props) {
                 />
               </td>
               <td>{formatDate(row.date)}</td>
-              <td className="review-table__label">
+              <td className="min-w-[140px] whitespace-normal">
                 {row.label}
-                {row.notes && row.notes !== row.label && <small>{row.notes}</small>}
+                {row.notes && row.notes !== row.label && (
+                  <small className={note}>{row.notes}</small>
+                )}
               </td>
               <td>
                 <ListPicker
                   title={row.label}
                   ariaLabel={`Category for ${row.label}`}
                   size="small"
-                  className="review-table__select"
+                  className="min-w-[170px]"
                   value={row.categoryId ?? ''}
                   options={[
                     { value: '', label: 'Not imported' },
@@ -94,20 +115,24 @@ function ReviewTable({ rows, categories, accounts, onChange }: Props) {
                 {accountOf(row.accountId)?.name}
                 {/* Same rule as adding by hand: before the opening date is history */}
                 {row.date < (accountOf(row.accountId)?.openingDate ?? '') && (
-                  <small className="review-table__message">
-                    History only: before its opening date
-                  </small>
+                  <small className={note}>History only: before its opening date</small>
                 )}
               </td>
-              <td className={`review-table__amount${row.type === 'INCOME' ? ' is-income' : ''}`}>
+              <td className={cn('text-right! tabular-nums', row.type === 'INCOME' && incomeText)}>
                 {row.type === 'INCOME' ? '+' : '−'}
                 {formatMoney(row.amount)}
               </td>
               <td>
-                <span className={`review-status review-status--${row.status}`} title={row.message}>
+                <span
+                  className={cn(
+                    'inline-block rounded-full px-[9px] py-0.5 text-xs font-medium',
+                    STATUS_TINT[row.status],
+                  )}
+                  title={row.message}
+                >
                   {STATUS_LABELS[row.status]}
                 </span>
-                {row.message && <small className="review-table__message">{row.message}</small>}
+                {row.message && <small className={note}>{row.message}</small>}
               </td>
             </tr>
           ))}

@@ -2,6 +2,7 @@ import type { AccountMapping, AmountMapping, Mapping } from '../../lib/import/de
 import { DATE_FORMATS, type DateFormat } from '../../lib/import/parse'
 import ListPicker from '../ListPicker'
 import { Field, FieldLabel } from '../form'
+import { fieldGrid, warnText } from './styles'
 
 export type ColumnChoice = { index: number; label: string }
 
@@ -71,8 +72,8 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
   }
 
   return (
-    <div className="column-matcher">
-      <div className="column-matcher__grid">
+    <div>
+      <div className={fieldGrid}>
         <ColumnSelect
           label="Date"
           columns={columns}
@@ -91,7 +92,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
             placeholder="Choose a format"
           />
           {ambiguousDates && !mapping.dateFormat && (
-            <span className="column-matcher__hint">
+            <span className={warnText}>
               These dates could be day/month or month/day, so please choose.
             </span>
           )}
@@ -109,7 +110,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
       </Field>
 
       {amount?.style === 'typed' && (
-        <div className="column-matcher__grid">
+        <div className={fieldGrid}>
           <ColumnSelect
             label="Amount"
             columns={columns}
@@ -125,7 +126,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
         </div>
       )}
       {amount?.style === 'split' && (
-        <div className="column-matcher__grid column-matcher__grid--three">
+        <div className={fieldGrid}>
           <ColumnSelect
             label="Money out"
             columns={columns}
@@ -148,7 +149,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
         </div>
       )}
       {amount?.style === 'signed' && (
-        <div className="column-matcher__grid">
+        <div className={fieldGrid}>
           <ColumnSelect
             label="Amount"
             columns={columns}
@@ -170,7 +171,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
         </div>
       )}
 
-      <div className="column-matcher__grid">
+      <div className={fieldGrid}>
         <ColumnSelect
           label="Category (optional)"
           columns={columns}
@@ -187,7 +188,7 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
         />
       </div>
 
-      <div className="column-matcher__grid">
+      <div className={fieldGrid}>
         <Field>
           <FieldLabel>Which account?</FieldLabel>
           <ListPicker<AccountMapping['kind'] | ''>

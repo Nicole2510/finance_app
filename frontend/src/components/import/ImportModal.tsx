@@ -36,10 +36,10 @@ import ColumnMatcher, { type ColumnChoice } from './ColumnMatcher'
 import ReadPreview from './ReadPreview'
 import NameMatcher from './NameMatcher'
 import ReviewTable from './ReviewTable'
-import './ImportModal.css'
 import { Button } from '@/components/ui/button'
 import ListPicker from '../ListPicker'
 import { Field, FieldLabel, FormActions, FormError } from '../form'
+import { intro, stepLabel, table as tableClasses, tableWrap, warnText } from './styles'
 
 type Props = {
   accounts: Account[]
@@ -272,11 +272,11 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
     return (
       <Modal
         title="Import transactions"
-        badge={<p className="import__step">Step 4 of 4 · Review and import</p>}
+        badge={<p className={stepLabel}>Step 4 of 4 · Review and import</p>}
         variant="large"
         onClose={onClose}
       >
-        <p className="review-summary">
+        <p className="mb-3 text-sm text-foreground/80">
           Importing <strong>{summary.importing}</strong>{' '}
           {summary.importing === 1 ? 'transaction' : 'transactions'}:{' '}
           {formatMoney(summary.spending)} spending and {formatMoney(summary.income)} money in.{' '}
@@ -286,7 +286,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           don't want, or change a category.
         </p>
         {unreadable.length > 0 && (
-          <p className="column-matcher__hint">
+          <p className={warnText}>
             {unreadable.length} {unreadable.length === 1 ? 'row' : 'rows'} from the file won't be
             imported ({unreadable.map((r) => `row ${r.row + 1}: ${!r.ok && r.reason}`).join('; ')}).
             Fix any typos in your file, or add those rows by hand after importing.
@@ -320,11 +320,11 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
     return (
       <Modal
         title="Import transactions"
-        badge={<p className="import__step">Step 3 of 4 · Match names</p>}
+        badge={<p className={stepLabel}>Step 3 of 4 · Match names</p>}
         variant="large"
         onClose={onClose}
       >
-        <p className="import__intro">
+        <p className={intro}>
           Same-name categories and accounts were matched for you. Choose the rest once; your choices
           are remembered for next time. Transfers between your own money start as skipped.
         </p>
@@ -360,11 +360,11 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
     return (
       <Modal
         title="Import transactions"
-        badge={<p className="import__step">Step 2 of 4 · Match columns</p>}
+        badge={<p className={stepLabel}>Step 2 of 4 · Match columns</p>}
         variant="large"
         onClose={onClose}
       >
-        <p className="import__intro">
+        <p className={intro}>
           These were matched automatically. Check them against the preview below and fix anything
           that's wrong.
         </p>
@@ -395,20 +395,24 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
   return (
     <Modal
       title="Import transactions"
-      badge={<p className="import__step">Step 1 of 4 · Choose a file</p>}
+      badge={<p className={stepLabel}>Step 1 of 4 · Choose a file</p>}
       variant="large"
       onClose={onClose}
     >
-      <p className="import__intro">
+      <p className={intro}>
         Choose an Excel workbook (.xlsx) or a CSV file. It's read here in your browser; only the
         transactions you import are sent to Nayad. Most banks can export CSV.
       </p>
 
-      <label className="import__drop">
+      {/* The whole box is the file picker; the real input is hidden inside it */}
+      <label className="relative mb-5 flex cursor-pointer flex-col items-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-border bg-card px-4 py-[26px] text-center text-foreground/80 hover:border-muted-foreground focus-within:ring-3 focus-within:ring-primary/20">
         <FileUp size={22} aria-hidden />
-        <span>{fileName ?? 'Choose an .xlsx or CSV file'}</span>
-        <small>Up to {MAX_FILE_MB} MB</small>
+        <span className="font-medium wrap-anywhere">
+          {fileName ?? 'Choose an .xlsx or CSV file'}
+        </span>
+        <small className="text-muted-foreground">Up to {MAX_FILE_MB} MB</small>
         <input
+          className="absolute inset-0 cursor-pointer opacity-0"
           type="file"
           accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => chooseFile(e.target.files?.[0])}
@@ -447,7 +451,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           )}
 
           {table || withoutHeadings ? (
-            <p className="import__found">
+            <p className="mb-4 rounded-[10px] bg-[#e5ebe2] px-3.5 py-2.5 text-sm text-(--green)">
               {table
                 ? `Found the transactions table: ${table.transactions} transactions.`
                 : 'This file has no column headings, so they were worked out from the values.'}{' '}
@@ -470,8 +474,8 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
             </Field>
           )}
 
-          <div className="import__table-wrap">
-            <table className="import__table">
+          <div className={tableWrap}>
+            <table className={tableClasses}>
               <thead>
                 <tr>
                   {shownColumns.map((c) => (

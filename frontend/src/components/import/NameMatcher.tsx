@@ -5,6 +5,7 @@ import EmojiPicker from '../EmojiPicker'
 import { cleanName, emojiOf, type CategoryChoice, type NameToMatch } from '../../lib/import/names'
 import ListPicker from '../ListPicker'
 import { Input } from '../form'
+import { cn } from '@/lib/utils'
 
 type Props = {
   names: NameToMatch[]
@@ -28,6 +29,14 @@ const SPENDING_EMOJI = ['🛒', '🍽️', '🏠', '🚗', '💡', '🛍️']
 const INCOME_EMOJI = ['💼', '💰', '🪙', '🎁', '📈', '🧑‍💻']
 
 const plural = (n: number) => `${n} ${n === 1 ? 'row' : 'rows'}`
+
+const heading = 'mt-2 mb-2.5 flex items-baseline justify-between gap-3 text-base font-semibold'
+const list = 'mb-5 list-none rounded-[10px] border border-border p-0'
+// One name and its choice side by side (stacked on phones), lines between rows
+const row =
+  'grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-3 px-3.5 py-2.5 [&+&]:border-t [&+&]:border-border max-sm:grid-cols-1'
+const nameCell =
+  'flex min-w-0 flex-col font-medium wrap-anywhere [&_small]:text-[13px] [&_small]:font-normal [&_small]:text-muted-foreground'
 
 // Step 3: match the file's accounts and categories to the person's own
 function NameMatcher({
@@ -63,12 +72,12 @@ function NameMatcher({
   }
 
   return (
-    <div className="name-matcher">
-      <h3 className="name-matcher__heading">Accounts</h3>
-      <ul className="name-matcher__list">
+    <div>
+      <h3 className={heading}>Accounts</h3>
+      <ul className={list}>
         {accountsInFile.map(({ name, count }) => (
-          <li key={name} className="name-matcher__row">
-            <span className="name-matcher__name">
+          <li key={name} className={row}>
+            <span className={nameCell}>
               {name || 'All transactions in this file'}
               <small>{plural(count)}</small>
             </span>
@@ -84,26 +93,28 @@ function NameMatcher({
         ))}
       </ul>
 
-      <h3 className="name-matcher__heading">
+      <h3 className={heading}>
         Categories
-        <span className={waiting ? 'name-matcher__waiting' : 'name-matcher__done'}>
+        <span
+          className={cn('text-[13px] font-medium', waiting ? 'text-destructive' : 'text-(--green)')}
+        >
           {waiting ? `${waiting} of ${names.length} need a choice` : 'All matched'}
         </span>
       </h3>
-      <ul className="name-matcher__list">
+      <ul className={list}>
         {ordered.map((name) => {
           const choice = categoryChoices[name.key] ?? null
           const options = categoriesFor(name.type, categories)
           return (
-            <li key={name.key} className={`name-matcher__row${choice ? '' : ' is-waiting'}`}>
-              <span className="name-matcher__name">
+            <li key={name.key} className={cn(row, !choice && 'bg-destructive/5')}>
+              <span className={nameCell}>
                 {name.label}
                 <small>
                   {name.type === 'INCOME' ? 'Money in' : 'Spending'} · {plural(name.count)}
                   {choice?.kind === 'skip' && ` · ${choice.reason}`}
                 </small>
               </span>
-              <div className="name-matcher__choice">
+              <div className="flex flex-col gap-2">
                 <ListPicker
                   title={name.label}
                   ariaLabel={`Category for ${name.label}`}
@@ -126,7 +137,7 @@ function NameMatcher({
                 />
 
                 {choice?.kind === 'new' && (
-                  <div className="name-matcher__new">
+                  <div className="grid grid-cols-[1fr_auto] gap-2 [&>.emoji-picker]:col-span-full">
                     <EmojiPicker
                       value={choice.emoji}
                       suggestions={name.type === 'INCOME' ? INCOME_EMOJI : SPENDING_EMOJI}
