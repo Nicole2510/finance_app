@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Modal from '../Modal'
 import DatePicker from '../DatePicker'
+import { Button } from '@/components/ui/button'
+import { Field, FieldLabel, FormActions, FormError } from '../form'
 
 export type DateRange = { from: string; to: string }
 
@@ -19,32 +21,25 @@ function DateRangeModal({ initial, onApply, onClose }: Props) {
 
   return (
     <Modal title="Filter by dates" onClose={onClose}>
-      <div className="form-field">
-        <span className="form-field__label">From</span>
+      <Field as="div">
+        <FieldLabel>From</FieldLabel>
         <DatePicker value={from} onChange={setFrom} />
-      </div>
-      <div className="form-field">
-        <span className="form-field__label">To</span>
+      </Field>
+      <Field as="div">
+        <FieldLabel>To</FieldLabel>
         <DatePicker value={to} onChange={setTo} />
-      </div>
+      </Field>
       {backwards && (
-        <p className="form-error" role="alert">
-          The start date must be on or before the end date.
-        </p>
+        <FormError role="alert">The start date must be on or before the end date.</FormError>
       )}
-      <div className="modal-actions">
-        <button type="button" className="btn btn--secondary" onClick={onClose}>
+      <FormActions>
+        <Button type="button" variant="outline" size="lg" onClick={onClose}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={backwards}
-          onClick={() => onApply({ from, to })}
-        >
+        </Button>
+        <Button type="button" size="lg" disabled={backwards} onClick={() => onApply({ from, to })}>
           Show these dates
-        </button>
-      </div>
+        </Button>
+      </FormActions>
     </Modal>
   )
 }

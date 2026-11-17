@@ -4,7 +4,8 @@ import { accountTypes } from '../../lib/accountTypes'
 import AccountFilters, { type TypeFilter } from './AccountFilters'
 import AccountGroup from './AccountGroup'
 import AccountRow from './AccountRow'
-import './AccountList.css'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 type Props = {
   active: Account[]
@@ -16,6 +17,7 @@ type Props = {
   onSearchChange: (search: string) => void
   onTypeChange: (type: TypeFilter) => void
   onClear: () => void
+  hideOnNarrow: boolean // an account is open, so narrow screens show it instead
 }
 
 // Left panel: search and filter above the matching accounts
@@ -29,11 +31,19 @@ function AccountList({
   onSearchChange,
   onTypeChange,
   onClear,
+  hideOnNarrow,
 }: Props) {
   const [showArchived, setShowArchived] = useState(false)
 
   return (
-    <section className="account-list" aria-label="Your accounts">
+    <section
+      aria-label="Your accounts"
+      className={cn(
+        'flex flex-col gap-1 rounded-[20px] border border-border bg-card p-3',
+        // Narrow screens show the list or the account, not both
+        hideOnNarrow && 'max-[980px]:hidden',
+      )}
+    >
       <AccountFilters
         search={search}
         type={type}
@@ -42,19 +52,26 @@ function AccountList({
       />
 
       {active.length === 0 ? (
-        <div className="account-list__empty">
+        <div className="flex flex-col items-center gap-3.5 px-4 py-8 text-center text-muted-foreground">
           <p>{filtering ? 'No accounts match your search.' : 'No active accounts.'}</p>
           {filtering && (
-            <button type="button" className="btn btn--secondary" onClick={onClear}>
+            <Button type="button" variant="outline" onClick={onClear}>
               Clear
-            </button>
+            </Button>
           )}
         </div>
       ) : (
         (Object.keys(accountTypes) as AccountType[]).map((groupType) => {
           const inGroup = active.filter((a) => a.type === groupType)
-          return inGroup.length > 0 && (
-            <AccountGroup key={groupType} type={groupType} accounts={inGroup} selectedId={selectedId} />
+          return (
+            inGroup.length > 0 && (
+              <AccountGroup
+                key={groupType}
+                type={groupType}
+                accounts={inGroup}
+                selectedId={selectedId}
+              />
+            )
           )
         })
       )}
@@ -63,7 +80,7 @@ function AccountList({
         <>
           <button
             type="button"
-            className="account-list__toggle"
+            className="mt-2 mb-1 cursor-pointer self-start border-none bg-transparent px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
             aria-expanded={showArchived}
             onClick={() => setShowArchived(!showArchived)}
           >

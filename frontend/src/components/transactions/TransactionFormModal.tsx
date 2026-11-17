@@ -3,10 +3,13 @@ import { Trash2 } from 'lucide-react'
 import Modal from '../Modal'
 import DatePicker from '../DatePicker'
 import { categoriesFor } from '../../lib/categories'
-import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import { formatDate, today } from '../../lib/dates'
 import type { Account, Category, EntryType, IncomeSource, Transaction } from '../../lib/types'
-import './TransactionFormModal.css'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import CategoryPicker from '../CategoryPicker'
+import ListPicker from '../ListPicker'
+import { Field, FieldLabel, FormActions, FormError, Input } from '../form'
 
 // What the API expects
 export type TransactionValues = {
@@ -102,7 +105,7 @@ function TransactionFormModal({
   if (usableAccounts.length === 0) {
     return (
       <Modal title="Add transaction" onClose={onClose}>
-        <p className="transaction-form__hint">
+        <p className="text-muted-foreground">
           Add an account first, so there's somewhere for the money to go.
         </p>
       </Modal>
@@ -114,7 +117,12 @@ function TransactionFormModal({
       title={t ? 'Edit transaction' : 'Add transaction'}
       badge={
         t && (
-          <p className={`transaction-form__type transaction-form__type--${type.toLowerCase()}`}>
+          <p
+            className={cn(
+              '-mt-2 mb-4 inline-block rounded-full px-3 py-1 text-[13px] font-medium text-foreground/80',
+              type === 'EXPENSE' ? 'bg-muted' : 'bg-[#e8e7f0]',
+            )}
+          >
             {type === 'EXPENSE' ? 'Expense' : 'Income'}
           </p>
         )
@@ -124,14 +132,23 @@ function TransactionFormModal({
       <form onSubmit={submit}>
         {/* Only new transactions choose a type; a saved one shows it in the header */}
         {!t && (
-          <div className="segmented" role="radiogroup" aria-label="Type">
+          // Expense / Income switch
+          <div
+            className="mb-5 grid grid-cols-2 gap-1 rounded-[10px] bg-muted p-1"
+            role="radiogroup"
+            aria-label="Type"
+          >
             {(['EXPENSE', 'INCOME'] as const).map((option) => (
               <button
                 key={option}
                 type="button"
                 role="radio"
                 aria-checked={type === option}
-                className={type === option ? 'is-selected' : undefined}
+                className={cn(
+                  'cursor-pointer rounded-lg border-none bg-transparent px-3 py-[9px] font-medium text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                  type === option &&
+                    'bg-card text-foreground shadow-[0_1px_3px_rgba(30,27,46,0.12)]',
+                )}
                 onClick={() => changeType(option)}
               >
                 {option === 'EXPENSE' ? 'Expense' : 'Income'}
@@ -140,119 +157,100 @@ function TransactionFormModal({
           </div>
         )}
 
-        <label className="form-field">
-          <span className="form-field__label">Amount</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Amount</FieldLabel>
+          <Input
             value={amount}
             inputMode="decimal"
             placeholder="0.00"
             autoFocus
             onChange={(e) => setAmount(e.target.value)}
           />
-        </label>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label">Date</span>
+        <Field as="div">
+          <FieldLabel>Date</FieldLabel>
           <DatePicker value={date} max={today()} onChange={setDate} />
           {account && date < account.openingDate && (
-            <span className="transaction-form__history">
+            <span className="text-[13px] text-muted-foreground">
               Before this account's opening date ({formatDate(account.openingDate)}): kept as
               history, and doesn't change the balance.
             </span>
           )}
-        </div>
+        </Field>
 
-        <label className="form-field">
-          <span className="form-field__label">{type === 'INCOME' ? 'Paid into' : 'Paid from'}</span>
-          <select
-            className="form-input form-select"
+        <Field as="div">
+          <FieldLabel id="account-label">
+            {type === 'INCOME' ? 'Paid into' : 'Paid from'}
+          </FieldLabel>
+          <ListPicker
+            title={type === 'INCOME' ? 'Paid into' : 'Paid from'}
+            labelId="account-label"
             value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-          >
-            {usableAccounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={usableAccounts.map((a) => ({ value: a.id, label: a.name }))}
+            onChange={setAccountId}
+            placeholder="Choose an account"
+          />
+        </Field>
 
-        <label className="form-field">
-          <span className="form-field__label">Category</span>
-          <select
-            className="form-input form-select"
+        <Field as="div">
+          <FieldLabel id="category-label">Category</FieldLabel>
+          {/* A floating card drawn by the app, so it stays inside the window */}
+          <CategoryPicker
+            categories={categoryOptions}
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            {GROUP_ORDER.map((group) => {
-              const inGroup = categoryOptions.filter((c) => c.group === group)
-              return (
-                inGroup.length > 0 && (
-                  <optgroup key={group} label={categoryGroups[group].label}>
-                    {inGroup.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.emoji ? `${c.emoji} ` : ''}
-                        {c.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )
-              )
-            })}
-          </select>
-        </label>
+            onChange={setCategoryId}
+            labelId="category-label"
+          />
+        </Field>
 
         {type === 'INCOME' && (
-          <label className="form-field">
-            <span className="form-field__label">Income source (optional)</span>
-            <select
-              className="form-input form-select"
+          <Field as="div">
+            <FieldLabel id="source-label">Income source (optional)</FieldLabel>
+            <ListPicker
+              title="Income source"
+              labelId="source-label"
               value={sourceId}
-              onChange={(e) => setSourceId(e.target.value)}
-            >
-              <option value="">None</option>
-              {usableSources.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={[
+                { value: '', label: 'None' },
+                ...usableSources.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+              onChange={setSourceId}
+            />
+          </Field>
         )}
 
-        <label className="form-field">
-          <span className="form-field__label">Notes (optional)</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Notes (optional)</FieldLabel>
+          <Input
             value={notes}
             maxLength={200}
             placeholder="e.g. Weekly shop"
             onChange={(e) => setNotes(e.target.value)}
           />
-        </label>
+        </Field>
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <FormActions>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="btn btn--primary"
+            size="lg"
             disabled={!amount.trim() || !accountId || !categoryId || saving}
           >
             {t ? 'Save changes' : 'Add transaction'}
-          </button>
-        </div>
+          </Button>
+        </FormActions>
 
         {t && onDelete && (
-          <button type="button" className="transaction-form__delete" onClick={onDelete}>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-none bg-transparent p-2.5 font-medium text-destructive hover:bg-destructive/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
             <Trash2 size={16} aria-hidden /> Delete transaction
           </button>
         )}

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import Modal from './Modal'
+import { Button } from '@/components/ui/button'
+import { FormActions, FormError } from './form'
 
 type Props = {
   name: string
@@ -36,40 +38,41 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
 
   return (
     <Modal onClose={onClose}>
-      <div className="delete-modal">
-        <span className="delete-modal__icon" aria-hidden>
+      <div className="text-center">
+        <span
+          className="mx-auto mt-2 mb-4 grid size-[72px] place-items-center rounded-full bg-destructive/10 text-destructive"
+          aria-hidden
+        >
           <Trash2 size={26} />
         </span>
-        <h2 className="delete-modal__title">
+        <h2 className="mb-3 font-heading text-2xl font-semibold wrap-anywhere">
           {question ?? `Are you sure you want to delete “${name}”?`}
         </h2>
 
         {error ? (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <FormError role="alert">{error}</FormError>
         ) : (
-          <p className="delete-modal__note">
+          <p className="mt-2 mb-6 text-sm text-muted-foreground">
             {details
               ? `${details}. This can't be undone.`
               : `This will permanently delete the ${kindLabel}. It can't be undone.`}
           </p>
         )}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <FormActions>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
           {error && onArchive ? (
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={archive}>
+            <Button type="button" size="lg" disabled={busy} onClick={archive}>
               Archive instead
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={remove}>
+            <Button type="button" variant="destructive" size="lg" disabled={busy} onClick={remove}>
               Delete
-            </button>
+            </Button>
           )}
-        </div>
+        </FormActions>
       </div>
     </Modal>
   )
