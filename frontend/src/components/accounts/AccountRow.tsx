@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 import type { Account } from '../../lib/types'
-import { accountTypes } from '../../lib/accountTypes'
+import { cn } from '@/lib/utils'
+import { accountTint, accountTypes } from '../../lib/accountTypes'
 import { balanceText } from '../../lib/accountBalance'
-import './AccountRow.css'
 
 type Props = {
   account: Account
@@ -17,14 +17,23 @@ function AccountRow({ account, selected }: Props) {
   return (
     <Link
       to={`/accounts/${account.id}`}
-      className={`account-row account-row--${account.type.toLowerCase()}${selected ? ' is-selected' : ''}${account.archivedAt ? ' is-archived' : ''}`}
+      className={cn(
+        'flex items-center gap-3.5 rounded-[14px] px-2.5 py-2 text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+        selected && 'bg-accent hover:bg-accent',
+        account.archivedAt && '[&>*]:opacity-60',
+      )}
       aria-current={selected ? 'page' : undefined}
     >
-      <span className="account-row__icon">
+      <span
+        className={cn(
+          'grid size-[38px] shrink-0 place-items-center rounded-[10px] text-foreground/80',
+          accountTint[account.type],
+        )}
+      >
         <Icon size={18} aria-hidden />
       </span>
-      <span className="account-row__name">{account.name}</span>
-      <span className={`account-row__balance${overdrawn ? ' is-negative' : ''}`}>
+      <span className="min-w-0 flex-1 truncate font-medium">{account.name}</span>
+      <span className={cn('shrink-0 tabular-nums', overdrawn && 'text-destructive')}>
         {balanceText(account.type, account.currentBalance)}
       </span>
     </Link>

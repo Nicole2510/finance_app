@@ -13,12 +13,14 @@ import AccountList from '../components/accounts/AccountList'
 import ReconcileModal from '../components/accounts/ReconcileModal'
 import { RECENT_MAX } from '../components/accounts/RecentTransactions'
 import type { TypeFilter } from '../components/accounts/AccountFilters'
-import './Page.css'
-import './Accounts.css'
 import { Button } from '@/components/ui/button'
 import { FormError } from '../components/form'
 
 const TYPE_ORDER = Object.keys(accountTypes) as AccountType[]
+
+// A dashed box with a short message
+const emptyBox =
+  'rounded-[14px] border border-dashed border-border px-6 py-10 text-center text-muted-foreground'
 
 function Accounts() {
   const apiFetch = useApiFetch()
@@ -143,7 +145,7 @@ function Accounts() {
   const filtering = query !== '' || typeFilter !== 'ALL'
 
   return (
-    <div className="page accounts">
+    <div>
       <PageHeader title="Accounts">
         <Button
           type="button"
@@ -159,9 +161,11 @@ function Accounts() {
       ) : !accounts ? (
         <p>Loading...</p>
       ) : all.length === 0 ? (
-        <p className="accounts__empty">No accounts yet. Add your first one to start tracking.</p>
+        <p className={emptyBox}>No accounts yet. Add your first one to start tracking.</p>
       ) : (
-        <div className={`accounts__layout${id ? ' has-selection' : ''}`}>
+        // List on the left, selected account on the right. Too narrow for both:
+        // show the list, or the account once one is selected.
+        <div className="grid grid-cols-[minmax(280px,360px)_minmax(0,1fr)] items-start gap-5 max-[980px]:grid-cols-1">
           <AccountList
             active={matching.filter((a) => a.archivedAt === null)}
             archived={matching.filter((a) => a.archivedAt !== null)}
@@ -172,8 +176,9 @@ function Accounts() {
             onSearchChange={setSearch}
             onTypeChange={setTypeFilter}
             onClear={clearFilters}
+            hideOnNarrow={!!id}
           />
-          <div className="accounts__panel">
+          <div className={id ? undefined : 'max-[980px]:hidden'}>
             {actionError && <FormError role="alert">{actionError}</FormError>}
             {selected ? (
               <AccountDetails
@@ -185,7 +190,7 @@ function Accounts() {
                 recent={recent?.accountId === selected.id ? recent.transactions : null}
               />
             ) : (
-              <p className="accounts__empty">
+              <p className={emptyBox}>
                 {id ? 'Account not found.' : 'Select an account to see its details.'}
               </p>
             )}

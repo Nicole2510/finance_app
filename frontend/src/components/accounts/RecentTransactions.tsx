@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import type { Transaction } from '../../lib/types'
 import { dayLabel } from '../../lib/dates'
 import { describeTransaction } from '../../lib/transactionDisplay'
@@ -15,13 +16,13 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
   if (!transactions)
     return (
       <Section>
-        <p>Loading...</p>
+        <p className="mt-2 text-muted-foreground">Loading...</p>
       </Section>
     )
   if (transactions.length === 0)
     return (
       <Section>
-        <p>No transactions yet.</p>
+        <p className="mt-2 text-muted-foreground">No transactions yet.</p>
       </Section>
     )
 
@@ -34,7 +35,8 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
         hasMore && (
           <button
             type="button"
-            className="recent-list__toggle"
+            // "View all (43)" / "Show less": a small link beside the heading
+            className="cursor-pointer border-none bg-transparent p-0 text-sm text-muted-foreground underline underline-offset-3 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             aria-expanded={expanded}
             onClick={() => setExpanded(!expanded)}
           >
@@ -43,19 +45,29 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
         )
       }
     >
-      <ul className={`recent-list${expanded ? ' is-expanded' : ''}`}>
+      {/* "View all": the full list scrolls inside the panel, at about the height
+          of the 10 rows shown before, so the panel doesn't jump in size */}
+      <ul className={cn('mt-3 list-none p-0', expanded && 'max-h-[600px] overflow-y-auto pr-1')}>
         {shown.map((t) => {
           const { emoji, name, amountText, isIncome } = describeTransaction(t)
           return (
-            <li key={t.id} className="recent-list__item">
-              <span className="recent-list__emoji" aria-hidden>
+            <li
+              key={t.id}
+              className="flex items-center gap-3 py-2 [&+&]:border-t [&+&]:border-border"
+            >
+              <span
+                className="grid size-[34px] shrink-0 place-items-center rounded-[10px] bg-muted"
+                aria-hidden
+              >
                 {emoji}
               </span>
-              <span className="recent-list__text">
-                <span className="recent-list__name">{name}</span>
-                <span className="recent-list__date">{dayLabel(t.date)}</span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="font-medium">{name}</span>
+                <span className="text-[13px] text-muted-foreground">{dayLabel(t.date)}</span>
               </span>
-              <span className={`recent-list__amount${isIncome ? ' is-income' : ''}`}>
+              <span
+                className={cn('shrink-0 font-medium tabular-nums', isIncome && 'text-(--green)')}
+              >
                 {amountText}
               </span>
             </li>
@@ -64,7 +76,7 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
       </ul>
 
       {expanded && transactions.length === RECENT_MAX && (
-        <p className="recent-list__note">
+        <p className="mt-3 text-center text-sm text-muted-foreground">
           Showing the latest {RECENT_MAX}. See Transactions for older ones.
         </p>
       )}
@@ -75,9 +87,9 @@ function RecentTransactions({ transactions }: { transactions: Transaction[] | nu
 // The heading every state shares, with an optional link beside it
 function Section({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <section className="account-details__activity">
-      <div className="account-details__activity-header">
-        <h3>Recent transactions</h3>
+    <section className="mt-6 border-t border-border pt-[22px]">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-lg font-semibold">Recent transactions</h3>
         {action}
       </div>
       {children}

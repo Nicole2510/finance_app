@@ -51,8 +51,11 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
   return (
     <Modal title="Reconcile balance" onClose={onClose}>
       <form onSubmit={submit}>
-        <p className="reconcile__current">
-          In Nayad: <strong>{balanceText(account.type, account.currentBalance)}</strong>
+        <p className="mb-[18px] text-muted-foreground">
+          In Nayad:{' '}
+          <strong className="text-foreground tabular-nums">
+            {balanceText(account.type, account.currentBalance)}
+          </strong>
         </p>
 
         <Field>
@@ -69,7 +72,10 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
         </Field>
 
         {preview() && (
-          <p className="reconcile__preview" aria-live="polite">
+          <p
+            className="mb-[18px] rounded-[10px] bg-muted px-3.5 py-3 text-sm text-foreground/80"
+            aria-live="polite"
+          >
             {preview()} It's recorded as a balance adjustment dated today, so your history stays
             intact.
           </p>
