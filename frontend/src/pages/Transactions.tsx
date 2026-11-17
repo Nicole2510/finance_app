@@ -18,8 +18,6 @@ import TransactionList from '../components/transactions/TransactionList'
 import TransactionFormModal, {
   type TransactionValues,
 } from '../components/transactions/TransactionFormModal'
-import './Page.css'
-import './Transactions.css'
 import { Button } from '@/components/ui/button'
 import { FormError } from '../components/form'
 
@@ -189,9 +187,11 @@ function Transactions() {
   }
 
   return (
-    <div className="page transactions">
+    // Desktop: the page fits the window and only the list's rows scroll.
+    // Phones: the page scrolls as usual.
+    <div className="flex h-[calc(100dvh-64px)] flex-col max-[860px]:h-auto">
       <PageHeader title="Transactions">
-        <div className="transactions__actions">
+        <div className="flex gap-2.5">
           <Button
             type="button"
             variant="outline"
@@ -211,11 +211,17 @@ function Transactions() {
         </div>
       </PageHeader>
 
-      <div className="transactions__toolbar">
+      <div className="mb-5 shrink-0">
         {range ? (
-          <span className="transactions__range">
+          // Shown instead of the month switcher while a date range is on
+          <span className="inline-flex items-center gap-2 rounded-[14px] border border-border bg-card py-1.5 pr-2 pl-4 font-medium">
             {formatDate(range.from)} – {formatDate(range.to)}
-            <button type="button" aria-label="Back to months" onClick={() => setParams({ month })}>
+            <button
+              type="button"
+              aria-label="Back to months"
+              onClick={() => setParams({ month })}
+              className="grid size-7 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
               <X size={16} />
             </button>
           </span>
@@ -230,8 +236,11 @@ function Transactions() {
         <p>Loading...</p>
       ) : (
         <>
-          <MonthTotals transactions={visible} />
-          <div className="transactions__panel">
+          <div className="shrink-0">
+            <MonthTotals transactions={visible} />
+          </div>
+          {/* Shrinks to fit the window; the list inside it scrolls */}
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-[20px] border border-border bg-card">
             <TransactionFilters
               filters={filters}
               accounts={(lookups?.accounts ?? []).filter((a) => a.archivedAt === null)}
@@ -242,12 +251,13 @@ function Transactions() {
               filtering={filtering}
             />
             {checked.length > 0 && (
+              // Appears while rows are ticked
               <div
-                className="transactions__selection"
+                className="flex shrink-0 flex-wrap items-center gap-2.5 border-b border-border bg-muted px-3.5 py-2.5"
                 role="region"
                 aria-label="Selected transactions"
               >
-                <span>
+                <span className="flex-1 tabular-nums">
                   <strong>{checked.length}</strong> selected ·{' '}
                   {Number(checkedTotal) < 0 ? '−' : '+'}
                   {formatMoney(checkedTotal.replace('-', ''))}
@@ -277,14 +287,16 @@ function Transactions() {
                 onCheckAll={checkAll}
               />
             ) : filtering ? (
-              <div className="transactions__empty">
+              <div className="flex flex-col items-center gap-3.5 px-6 py-10 text-center text-muted-foreground">
                 <p>No transactions match.</p>
                 <Button type="button" variant="outline" onClick={clearAll}>
                   Clear filters
                 </Button>
               </div>
             ) : (
-              <p className="transactions__empty">No transactions in {monthLabel(month)}.</p>
+              <p className="px-6 py-10 text-center text-muted-foreground">
+                No transactions in {monthLabel(month)}.
+              </p>
             )}
           </div>
         </>
