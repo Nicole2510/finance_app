@@ -53,15 +53,14 @@ function scrollParent(el: HTMLElement | null) {
   return null
 }
 
-// A date field that drops down a calendar. Clicking a day only highlights it;
-// Confirm applies it, and Close, Escape or clicking outside leave the date as it was.
+// A date field that drops down a calendar. Clicking a day picks it and closes the
+// calendar; Escape or clicking outside close it and leave the date as it was.
 function DatePicker({ value, onChange, min, max }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [view, setView] = useState(() => parse(value)) // which month is showing
-  const [draft, setDraft] = useState(value) // highlighted day, not saved until Confirm
   useDismiss(ref, open, () => setOpen(false))
 
   // The calendar floats (position: fixed) so it never stretches the form.
@@ -137,14 +136,8 @@ function DatePicker({ value, onChange, min, max }: Props) {
     setView({ year, month, day: 1 })
   }
 
-  function highlight(key: string) {
-    setDraft(key)
-    const { year, month } = parse(key)
-    if (month !== view.month) setView({ year, month, day: 1 }) // a greyed-out day from next door
-  }
-
-  function confirm() {
-    onChange(draft)
+  function pick(key: string) {
+    onChange(key)
     setOpen(false)
   }
 
@@ -167,10 +160,7 @@ function DatePicker({ value, onChange, min, max }: Props) {
         className="form-input date-picker__field"
         aria-expanded={open}
         onClick={() => {
-          if (!open) {
-            setView(parse(value))
-            setDraft(value)
-          }
+          if (!open) setView(parse(value))
           setOpen(!open)
         }}
       >
@@ -217,25 +207,16 @@ function DatePicker({ value, onChange, min, max }: Props) {
               <button
                 key={key}
                 type="button"
-                className={`date-picker__day${inMonth ? '' : ' is-outside'}${key === draft ? ' is-selected' : ''}`}
+                className={`date-picker__day${inMonth ? '' : ' is-outside'}${key === value ? ' is-selected' : ''}`}
                 aria-label={formatDate(key)}
-                aria-pressed={key === draft}
+                aria-pressed={key === value}
                 // String comparison works because "YYYY-MM-DD" sorts like a date
                 disabled={(!!max && key > max) || (!!min && key < min)}
-                onClick={() => highlight(key)}
+                onClick={() => pick(key)}
               >
                 {String(day).padStart(2, '0')}
               </button>
             ))}
-          </div>
-
-          <div className="date-picker__actions">
-            <button type="button" className="date-picker__close" onClick={() => setOpen(false)}>
-              Close
-            </button>
-            <button type="button" className="date-picker__confirm" onClick={confirm}>
-              Confirm
-            </button>
           </div>
         </div>
       )}
