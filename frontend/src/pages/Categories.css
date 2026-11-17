@@ -1,10 +1,3 @@
-.categories__add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-}
-
 /* ---------- Tiles ---------- */
 .tiles {
   display: grid;
@@ -23,7 +16,9 @@
   font: inherit;
   color: var(--espresso);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .tile:hover {
@@ -31,13 +26,27 @@
   box-shadow: var(--shadow-soft);
 }
 
-.tile--needs { background: #f6ebdf; }
-.tile--wants { background: #f6e3e1; }
-.tile--savings { background: #e5ebe2; }
-.tile--debt { background: #f3e9df; }
-.tile--investments { background: #e3eaec; }
-.tile--income { background: #e8e7f0; }
-.tile--sources { background: #ebe8e3; }
+.tile--needs {
+  background: #f6ebdf;
+}
+.tile--wants {
+  background: #f6e3e1;
+}
+.tile--savings {
+  background: #e5ebe2;
+}
+.tile--debt {
+  background: #f3e9df;
+}
+.tile--investments {
+  background: #e3eaec;
+}
+.tile--income {
+  background: #e8e7f0;
+}
+.tile--sources {
+  background: #ebe8e3;
+}
 
 .tile__icon,
 .panel__icon {
@@ -206,9 +215,15 @@
   transform: translateX(4px);
 }
 
-.choose__option--expense { background: #f6ebdf; }
-.choose__option--income { background: #e8e7f0; }
-.choose__option--source { background: #e5ebe2; }
+.choose__option--expense {
+  background: #f6ebdf;
+}
+.choose__option--income {
+  background: #e8e7f0;
+}
+.choose__option--source {
+  background: #e5ebe2;
+}
 
 .choose__emoji {
   display: grid;

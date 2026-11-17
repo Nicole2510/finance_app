@@ -20,6 +20,7 @@ import TransactionFormModal, {
 } from '../components/transactions/TransactionFormModal'
 import './Page.css'
 import './Transactions.css'
+import { Button } from '@/components/ui/button'
 
 // The importer and its file readers only download the first time Import is used
 const ImportModal = lazy(() => import('../components/import/ImportModal'))
@@ -190,22 +191,22 @@ function Transactions() {
     <div className="page transactions">
       <PageHeader title="Transactions">
         <div className="transactions__actions">
-          <button
+          <Button
             type="button"
-            className="btn btn--secondary transactions__add"
+            variant="outline"
             disabled={!lookups}
             onClick={() => setImporting(true)}
           >
             <FileUp size={18} /> Import
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn--primary transactions__add"
+
             disabled={!lookups}
             onClick={() => setForm({})}
           >
             <Plus size={18} /> Add transaction
-          </button>
+          </Button>
         </div>
       </PageHeader>
 
@@ -250,20 +251,17 @@ function Transactions() {
                   {Number(checkedTotal) < 0 ? '−' : '+'}
                   {formatMoney(checkedTotal.replace('-', ''))}
                 </span>
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={() => checkAll(false)}
-                >
+                <Button type="button" variant="outline" size="xs" onClick={() => checkAll(false)}>
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn--danger"
+                  variant="destructive"
+                  size="xs"
                   onClick={() => setDeletingSelected(true)}
                 >
                   Delete
-                </button>
+                </Button>
               </div>
             )}
             {visible.length > 0 ? (
@@ -280,9 +278,9 @@ function Transactions() {
             ) : filtering ? (
               <div className="transactions__empty">
                 <p>No transactions match.</p>
-                <button type="button" className="btn btn--secondary" onClick={clearAll}>
+                <Button type="button" variant="outline" onClick={clearAll}>
                   Clear filters
-                </button>
+                </Button>
               </div>
             ) : (
               <p className="transactions__empty">No transactions in {monthLabel(month)}.</p>

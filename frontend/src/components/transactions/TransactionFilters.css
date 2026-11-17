@@ -19,8 +19,8 @@
 }
 
 .transaction-filters__search:focus-within,
-.transaction-filters__account:focus {
-  box-shadow: 0 0 0 3px rgba(230, 184, 178, 0.5);
+.transaction-filters__account:focus-visible {
+  box-shadow: 0 0 0 3px rgba(109, 63, 208, 0.2);
 }
 
 .transaction-filters__search input {
@@ -44,14 +44,15 @@
 }
 
 .transaction-filters__account {
-  padding-left: 14px;
-  min-height: 42px;
+  width: auto;
+  max-width: 220px;
+  height: 42px;
+  padding: 0 12px 0 14px;
   border: none;
   border-radius: var(--radius-sm);
   outline: none;
-  /* background-color, not background: the shorthand would erase the arrow */
-  background-color: var(--cream);
-  font: inherit;
+  background: var(--cream);
+  font-size: 15px;
   color: var(--espresso);
   cursor: pointer;
 }

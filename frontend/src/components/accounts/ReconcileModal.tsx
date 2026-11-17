@@ -3,6 +3,7 @@ import Modal from '../Modal'
 import { balanceText, toStoredBalance } from '../../lib/accountBalance'
 import { formatMoney } from '../../lib/money'
 import type { Account } from '../../lib/types'
+import { Button } from '@/components/ui/button'
 
 type Props = {
   account: Account
@@ -81,12 +82,12 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
         )}
 
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
-          <button type="submit" className="btn btn--primary" disabled={!diff || saving}>
+          </Button>
+          <Button type="submit" size="lg" disabled={!diff || saving}>
             Add adjustment
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -76,10 +76,10 @@ function Settings() {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => openUserProfile()}>
+            <Button onClick={() => openUserProfile()}>
               <UserCog /> Manage account
             </Button>
-            <Button size="lg" variant="outline" onClick={() => signOut({ redirectUrl: '/' })}>
+            <Button variant="outline" onClick={() => signOut({ redirectUrl: '/' })}>
               <LogOut /> Sign out
             </Button>
           </div>

@@ -3,6 +3,7 @@ import { categoriesFor } from '../../lib/categories'
 import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import EmojiPicker from '../EmojiPicker'
 import { cleanName, emojiOf, type CategoryChoice, type NameToMatch } from '../../lib/import/names'
+import ListPicker from '../ListPicker'
 
 type Props = {
   names: NameToMatch[]
@@ -70,19 +71,14 @@ function NameMatcher({
               {name || 'All transactions in this file'}
               <small>{plural(count)}</small>
             </span>
-            <select
-              className="form-input form-select"
-              aria-label={`Account for ${name || 'this file'}`}
+            <ListPicker
+              title="Account"
+              ariaLabel={`Account for ${name || 'this file'}`}
               value={accountChoices[name] ?? ''}
-              onChange={(e) => onAccountChange(name, e.target.value || null)}
-            >
-              <option value="">Choose an account</option>
-              {active.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+              options={active.map((a) => ({ value: a.id, label: a.name }))}
+              onChange={(id) => onAccountChange(name, id || null)}
+              placeholder="Choose an account"
+            />
           </li>
         ))}
       </ul>
@@ -107,31 +103,26 @@ function NameMatcher({
                 </small>
               </span>
               <div className="name-matcher__choice">
-                <select
-                  className="form-input form-select"
-                  aria-label={`Category for ${name.label}`}
+                <ListPicker
+                  title={name.label}
+                  ariaLabel={`Category for ${name.label}`}
                   value={toValue(choice)}
-                  onChange={(e) => choose(name, e.target.value)}
-                >
-                  <option value="">Choose a category</option>
-                  <option value="skip">Skip: don't import these</option>
-                  {GROUP_ORDER.map((group) => {
-                    const inGroup = options.filter((c) => c.group === group)
-                    return (
-                      inGroup.length > 0 && (
-                        <optgroup key={group} label={categoryGroups[group].label}>
-                          {inGroup.map((c) => (
-                            <option key={c.id} value={`cat:${c.id}`}>
-                              {c.emoji ? `${c.emoji} ` : ''}
-                              {c.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )
-                    )
-                  })}
-                  <option value="new">+ New category…</option>
-                </select>
+                  options={[
+                    { value: 'skip', label: "Skip: don't import these" },
+                    ...GROUP_ORDER.flatMap((group) =>
+                      options
+                        .filter((c) => c.group === group)
+                        .map((c) => ({
+                          value: `cat:${c.id}`,
+                          label: `${c.emoji ? `${c.emoji} ` : ''}${c.name}`,
+                          group: categoryGroups[group].label,
+                        })),
+                    ),
+                    { value: 'new', label: '+ New category…', group: 'Or' },
+                  ]}
+                  onChange={(value) => choose(name, value)}
+                  placeholder="Choose a category"
+                />
 
                 {choice?.kind === 'new' && (
                   <div className="name-matcher__new">
@@ -150,23 +141,17 @@ function NameMatcher({
                       }
                     />
                     {name.type === 'EXPENSE' && (
-                      <select
-                        className="form-input form-select"
-                        aria-label="Group for the new category"
+                      <ListPicker<CategoryGroup>
+                        title="Budget group"
+                        ariaLabel="Group for the new category"
+                        className="min-w-40"
                         value={choice.group}
-                        onChange={(e) =>
-                          onCategoryChange(name.key, {
-                            ...choice,
-                            group: e.target.value as CategoryGroup,
-                          })
-                        }
-                      >
-                        {GROUP_ORDER.filter((g) => g !== 'INCOME').map((g) => (
-                          <option key={g} value={g}>
-                            {categoryGroups[g].label}
-                          </option>
-                        ))}
-                      </select>
+                        options={GROUP_ORDER.filter((g) => g !== 'INCOME').map((g) => ({
+                          value: g,
+                          label: categoryGroups[g].label,
+                        }))}
+                        onChange={(group) => onCategoryChange(name.key, { ...choice, group })}
+                      />
                     )}
                   </div>
                 )}

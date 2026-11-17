@@ -15,6 +15,7 @@ import { RECENT_MAX } from '../components/accounts/RecentTransactions'
 import type { TypeFilter } from '../components/accounts/AccountFilters'
 import './Page.css'
 import './Accounts.css'
+import { Button } from '@/components/ui/button'
 
 const TYPE_ORDER = Object.keys(accountTypes) as AccountType[]
 
@@ -143,13 +144,13 @@ function Accounts() {
   return (
     <div className="page accounts">
       <PageHeader title="Accounts">
-        <button
+        <Button
           type="button"
-          className="btn btn--primary accounts__add"
+
           onClick={() => setAdding(true)}
         >
           <Plus size={18} /> Add account
-        </button>
+        </Button>
       </PageHeader>
 
       {loadError ? (

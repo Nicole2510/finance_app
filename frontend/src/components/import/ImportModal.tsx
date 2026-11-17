@@ -37,6 +37,8 @@ import ReadPreview from './ReadPreview'
 import NameMatcher from './NameMatcher'
 import ReviewTable from './ReviewTable'
 import './ImportModal.css'
+import { Button } from '@/components/ui/button'
+import ListPicker from '../ListPicker'
 
 type Props = {
   accounts: Account[]
@@ -301,17 +303,17 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           </p>
         )}
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={() => setStep('names')}>
+          <Button type="button" variant="outline" size="lg" onClick={() => setStep('names')}>
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn--primary"
+            size="lg"
             disabled={summary.importing === 0 || busy}
             onClick={importNow}
           >
             {busy ? 'Importing…' : `Import ${summary.importing}`}
-          </button>
+          </Button>
         </div>
       </Modal>
     )
@@ -345,17 +347,12 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           </p>
         )}
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={() => setStep('columns')}>
+          <Button type="button" variant="outline" size="lg" onClick={() => setStep('columns')}>
             Back
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!namesDone || busy}
-            onClick={goToReview}
-          >
+          </Button>
+          <Button type="button" size="lg" disabled={!namesDone || busy} onClick={goToReview}>
             {busy ? 'Checking…' : namesDone ? 'Next: review' : 'Choose the rest to continue'}
-          </button>
+          </Button>
         </div>
       </Modal>
     )
@@ -386,17 +383,17 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
         />
         <ReadPreview results={read} />
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={() => setStep('file')}>
+          <Button type="button" variant="outline" size="lg" onClick={() => setStep('file')}>
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn--primary"
+            size="lg"
             disabled={transactions.length === 0 || !mapping.dateFormat}
             onClick={goToNames}
           >
             Next: match names
-          </button>
+          </Button>
         </div>
       </Modal>
     )
@@ -436,35 +433,27 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           {sheets && sheets.length > 1 && (
             <label className="form-field">
               <span className="form-field__label">Which sheet has the transactions?</span>
-              <select
-                className="form-input form-select"
-                value={sheetIndex}
-                onChange={(e) => chooseSheet(Number(e.target.value))}
-              >
-                {sheets.map((sheet, i) => (
-                  <option key={sheet.name} value={i}>
-                    {sheet.name}
-                  </option>
-                ))}
-              </select>
+              <ListPicker
+                title="Sheet"
+                value={String(sheetIndex)}
+                options={sheets.map((sheet, i) => ({ value: String(i), label: sheet.name }))}
+                onChange={(i) => chooseSheet(Number(i))}
+              />
             </label>
           )}
 
           {tables.length > 1 && (
             <label className="form-field">
               <span className="form-field__label">Which table has the transactions?</span>
-              <select
-                className="form-input form-select"
-                value={tableIndex}
-                onChange={(e) => setTableIndex(Number(e.target.value))}
-              >
-                {tables.map((t, i) => (
-                  <option key={i} value={i}>
-                    {t.columns.map((c) => tidyHeading(rows[t.mapping.headerRow][c])).join(', ')} (
-                    {t.transactions} transactions)
-                  </option>
-                ))}
-              </select>
+              <ListPicker
+                title="Table"
+                value={String(tableIndex)}
+                options={tables.map((t, i) => ({
+                  value: String(i),
+                  label: `${t.columns.map((c) => tidyHeading(rows[t.mapping.headerRow][c])).join(', ')} (${t.transactions} transactions)`,
+                }))}
+                onChange={(i) => setTableIndex(Number(i))}
+              />
             </label>
           )}
 
@@ -480,17 +469,15 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
               <span className="form-field__label">
                 No transactions table was found automatically. Which row has the column headings?
               </span>
-              <select
-                className="form-input form-select"
-                value={manualHeaderRow}
-                onChange={(e) => setManualHeaderRow(Number(e.target.value))}
-              >
-                {rows.slice(0, 15).map((row, index) => (
-                  <option key={index} value={index}>
-                    Row {index + 1}: {row.filter(Boolean).slice(0, 4).join(', ') || '(empty)'}
-                  </option>
-                ))}
-              </select>
+              <ListPicker
+                title="Heading row"
+                value={String(manualHeaderRow)}
+                options={rows.slice(0, 15).map((row, index) => ({
+                  value: String(index),
+                  label: `Row ${index + 1}: ${row.filter(Boolean).slice(0, 4).join(', ') || '(empty)'}`,
+                }))}
+                onChange={(i) => setManualHeaderRow(Number(i))}
+              />
             </label>
           )}
 
@@ -523,17 +510,17 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
       )}
 
       <div className="modal-actions">
-        <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <Button type="button" variant="outline" size="lg" onClick={onClose}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn--primary"
+          size="lg"
           disabled={!rows || dataRows.length === 0}
           onClick={goToColumns}
         >
           Next: match columns
-        </button>
+        </Button>
       </div>
     </Modal>
   )

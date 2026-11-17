@@ -4,6 +4,7 @@ import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import { formatDate } from '../../lib/dates'
 import { formatMoney } from '../../lib/money'
 import type { ReviewRow } from '../../lib/import/review'
+import ListPicker from '../ListPicker'
 
 type Props = {
   rows: ReviewRow[]
@@ -68,30 +69,26 @@ function ReviewTable({ rows, categories, accounts, onChange }: Props) {
                 {row.notes && row.notes !== row.label && <small>{row.notes}</small>}
               </td>
               <td>
-                <select
-                  className="form-input form-select review-table__select"
-                  aria-label={`Category for ${row.label}`}
+                <ListPicker
+                  title={row.label}
+                  ariaLabel={`Category for ${row.label}`}
+                  size="small"
+                  className="review-table__select"
                   value={row.categoryId ?? ''}
-                  onChange={(e) => changeCategory(row, e.target.value)}
-                >
-                  <option value="">Not imported</option>
-                  {GROUP_ORDER.map((group) => {
-                    const inGroup = categoriesFor(row.type, categories).filter(
-                      (c) => c.group === group,
-                    )
-                    return (
-                      inGroup.length > 0 && (
-                        <optgroup key={group} label={categoryGroups[group].label}>
-                          {inGroup.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )
-                    )
-                  })}
-                </select>
+                  options={[
+                    { value: '', label: 'Not imported' },
+                    ...GROUP_ORDER.flatMap((group) =>
+                      categoriesFor(row.type, categories)
+                        .filter((c) => c.group === group)
+                        .map((c) => ({
+                          value: c.id,
+                          label: c.name,
+                          group: categoryGroups[group].label,
+                        })),
+                    ),
+                  ]}
+                  onChange={(id) => changeCategory(row, id)}
+                />
               </td>
               <td>
                 {accountOf(row.accountId)?.name}

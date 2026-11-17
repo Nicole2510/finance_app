@@ -45,7 +45,9 @@
   font-size: 15px;
   color: var(--espresso);
   box-shadow: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .nayad-clerk__input:focus {

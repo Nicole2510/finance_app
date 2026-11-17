@@ -1,14 +1,58 @@
 import { useState } from 'react'
 import { MoreHorizontal } from 'lucide-react'
 import './EmojiPicker.css'
+import { Button } from '@/components/ui/button'
 
 // A curated set for money categories; any emoji can also be typed
 const ALL_EMOJIS = [
-  '🏠', '🛒', '🚌', '🚗', '⛽', '💡', '📱', '🩺', '❤️', '💊',
-  '🍽️', '☕', '🍕', '🛍️', '👗', '💄', '📺', '🎬', '🎮', '🎵',
-  '🎁', '✈️', '🏖️', '🏋️', '📚', '🎓', '🐶', '👶', '💇', '🧺',
-  '🐷', '💳', '🏦', '📈', '🛟', '🎯', '💼', '💰', '💸', '🪙',
-  '🏛️', '🏢', '🧑‍💻', '🎨', '🤝', '🎉', '🌱', '✨',
+  '🏠',
+  '🛒',
+  '🚌',
+  '🚗',
+  '⛽',
+  '💡',
+  '📱',
+  '🩺',
+  '❤️',
+  '💊',
+  '🍽️',
+  '☕',
+  '🍕',
+  '🛍️',
+  '👗',
+  '💄',
+  '📺',
+  '🎬',
+  '🎮',
+  '🎵',
+  '🎁',
+  '✈️',
+  '🏖️',
+  '🏋️',
+  '📚',
+  '🎓',
+  '🐶',
+  '👶',
+  '💇',
+  '🧺',
+  '🐷',
+  '💳',
+  '🏦',
+  '📈',
+  '🛟',
+  '🎯',
+  '💼',
+  '💰',
+  '💸',
+  '🪙',
+  '🏛️',
+  '🏢',
+  '🧑‍💻',
+  '🎨',
+  '🤝',
+  '🎉',
+  '🌱',
+  '✨',
 ]
 
 type Props = {
@@ -72,14 +116,14 @@ function EmojiPicker({ value, onChange, suggestions }: Props) {
                 }
               }}
             />
-            <button
+            <Button
               type="button"
-              className="btn btn--secondary"
+              variant="outline"
               disabled={!custom.trim()}
               onClick={() => onChange(custom.trim())}
             >
               Use
-            </button>
+            </Button>
           </div>
         </div>
       )}

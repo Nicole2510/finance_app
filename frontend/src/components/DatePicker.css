@@ -7,7 +7,9 @@
   cursor: pointer;
 }
 
-.date-picker__field svg { color: var(--taupe); }
+.date-picker__field svg {
+  color: var(--taupe);
+}
 
 .date-picker__panel {
   /* Floats above everything; DatePicker.tsx sets top, left and --pointer-x */
@@ -21,7 +23,7 @@
   box-shadow: 0 18px 40px -12px rgba(30, 27, 46, 0.3);
 }
 
-/* Little pointer aimed at the date field (on the bottom edge when opening upwards) */
+/* Little pointer aimed at the date field */
 .date-picker__panel::before {
   content: '';
   position: absolute;
@@ -34,9 +36,9 @@
   transform: rotate(45deg);
 }
 
-.date-picker__panel.is-above::before {
-  top: auto;
-  bottom: -7px;
+/* Hidden when the calendar can't sit right under the field */
+.date-picker__panel.no-pointer::before {
+  display: none;
 }
 
 .date-picker__header {
@@ -95,10 +97,23 @@
   cursor: pointer;
 }
 
-.date-picker__day:hover:not(:disabled):not(.is-selected) { background: var(--cream); }
-.date-picker__day.is-outside { color: var(--taupe); font-weight: 400; opacity: 0.6; }
-.date-picker__day.is-selected { background: var(--rose); color: #fff; }
-.date-picker__day:disabled { color: var(--sand); font-weight: 400; cursor: default; }
+.date-picker__day:hover:not(:disabled):not(.is-selected) {
+  background: var(--cream);
+}
+.date-picker__day.is-outside {
+  color: var(--taupe);
+  font-weight: 400;
+  opacity: 0.6;
+}
+.date-picker__day.is-selected {
+  background: var(--rose);
+  color: #fff;
+}
+.date-picker__day:disabled {
+  color: var(--sand);
+  font-weight: 400;
+  cursor: default;
+}
 
 .date-picker__actions {
   display: flex;
@@ -117,10 +132,20 @@
   cursor: pointer;
 }
 
-.date-picker__close { background: #f6e3e1; color: #b4443e; }
-.date-picker__confirm { background: #e5ebe2; color: var(--forest); }
-.date-picker__close:hover { background: #f1d6d3; }
-.date-picker__confirm:hover { background: #d9e3d5; }
+.date-picker__close {
+  background: #f6e3e1;
+  color: #b4443e;
+}
+.date-picker__confirm {
+  background: #e5ebe2;
+  color: var(--forest);
+}
+.date-picker__close:hover {
+  background: #f1d6d3;
+}
+.date-picker__confirm:hover {
+  background: #d9e3d5;
+}
 
 .date-picker__day:focus-visible,
 .date-picker__close:focus-visible,
@@ -130,6 +155,11 @@
 }
 
 @media (max-width: 420px) {
-  .date-picker__panel { padding: 14px 10px 12px; }
-  .date-picker__day { width: 34px; height: 34px; }
+  .date-picker__panel {
+    padding: 14px 10px 12px;
+  }
+  .date-picker__day {
+    width: 34px;
+    height: 34px;
+  }
 }

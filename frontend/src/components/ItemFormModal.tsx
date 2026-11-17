@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Modal from './Modal'
 import EmojiPicker from './EmojiPicker'
 import type { CategoryGroup } from '../lib/types'
+import { Button } from '@/components/ui/button'
+import ListPicker from './ListPicker'
 
 export type ItemKind = 'expense' | 'income' | 'source'
 
@@ -80,20 +82,18 @@ function ItemFormModal({ kind, initial, isEditing, onClose, onSubmit }: Props) {
         </div>
 
         {kind === 'expense' && (
-          <label className="form-field">
-            <span className="form-field__label">Budget group</span>
-            <select
-              className="form-input form-select"
+          <div className="form-field">
+            <span className="form-field__label" id="group-label">
+              Budget group
+            </span>
+            <ListPicker<CategoryGroup>
+              title="Budget group"
+              labelId="group-label"
               value={group}
-              onChange={(e) => setGroup(e.target.value as CategoryGroup)}
-            >
-              {EXPENSE_GROUPS.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={EXPENSE_GROUPS.map((g) => ({ value: g.id, label: g.label }))}
+              onChange={setGroup}
+            />
+          </div>
         )}
 
         {error && (
@@ -103,12 +103,12 @@ function ItemFormModal({ kind, initial, isEditing, onClose, onSubmit }: Props) {
         )}
 
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
-          <button type="submit" className="btn btn--primary" disabled={!name.trim() || saving}>
+          </Button>
+          <Button type="submit" size="lg" disabled={!name.trim() || saving}>
             {isEditing ? 'Save changes' : `Create ${kind === 'source' ? 'source' : 'category'}`}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

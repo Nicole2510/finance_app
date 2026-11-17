@@ -5,6 +5,7 @@ import AccountFilters, { type TypeFilter } from './AccountFilters'
 import AccountGroup from './AccountGroup'
 import AccountRow from './AccountRow'
 import './AccountList.css'
+import { Button } from '@/components/ui/button'
 
 type Props = {
   active: Account[]
@@ -45,16 +46,23 @@ function AccountList({
         <div className="account-list__empty">
           <p>{filtering ? 'No accounts match your search.' : 'No active accounts.'}</p>
           {filtering && (
-            <button type="button" className="btn btn--secondary" onClick={onClear}>
+            <Button type="button" variant="outline" onClick={onClear}>
               Clear
-            </button>
+            </Button>
           )}
         </div>
       ) : (
         (Object.keys(accountTypes) as AccountType[]).map((groupType) => {
           const inGroup = active.filter((a) => a.type === groupType)
-          return inGroup.length > 0 && (
-            <AccountGroup key={groupType} type={groupType} accounts={inGroup} selectedId={selectedId} />
+          return (
+            inGroup.length > 0 && (
+              <AccountGroup
+                key={groupType}
+                type={groupType}
+                accounts={inGroup}
+                selectedId={selectedId}
+              />
+            )
           )
         })
       )}

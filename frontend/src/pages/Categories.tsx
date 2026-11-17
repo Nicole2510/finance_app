@@ -9,23 +9,71 @@ import DeleteModal from '../components/DeleteModal'
 import PageHeader from '../components/PageHeader'
 import './Page.css'
 import './Categories.css'
+import { Button } from '@/components/ui/button'
 
 type TileId = CategoryGroup | 'SOURCES'
 
 const TILES: { id: TileId; label: string; emoji: string; hint: string; addLabel: string }[] = [
-  { id: 'NEEDS', label: 'Needs', emoji: '🛒', hint: 'The essentials for everyday life.', addLabel: 'Add category to Needs' },
-  { id: 'WANTS', label: 'Wants', emoji: '🛍️', hint: 'The fun stuff that makes life sweet.', addLabel: 'Add category to Wants' },
-  { id: 'SAVINGS', label: 'Savings', emoji: '🐷', hint: 'Money set aside for later. Future you says thanks.', addLabel: 'Add category to Savings' },
-  { id: 'DEBT', label: 'Debt', emoji: '💳', hint: 'Paying down what you owe.', addLabel: 'Add category to Debt' },
-  { id: 'INVESTMENTS', label: 'Investments', emoji: '📈', hint: 'Growing your money over time.', addLabel: 'Add category to Investments' },
-  { id: 'INCOME', label: 'Income', emoji: '🪙', hint: 'The kinds of money coming in.', addLabel: 'Add income category' },
-  { id: 'SOURCES', label: 'Income Sources', emoji: '🏛️', hint: 'Who pays you, like an employer or client.', addLabel: 'Add income source' },
+  {
+    id: 'NEEDS',
+    label: 'Needs',
+    emoji: '🛒',
+    hint: 'The essentials for everyday life.',
+    addLabel: 'Add category to Needs',
+  },
+  {
+    id: 'WANTS',
+    label: 'Wants',
+    emoji: '🛍️',
+    hint: 'The fun stuff that makes life sweet.',
+    addLabel: 'Add category to Wants',
+  },
+  {
+    id: 'SAVINGS',
+    label: 'Savings',
+    emoji: '🐷',
+    hint: 'Money set aside for later. Future you says thanks.',
+    addLabel: 'Add category to Savings',
+  },
+  {
+    id: 'DEBT',
+    label: 'Debt',
+    emoji: '💳',
+    hint: 'Paying down what you owe.',
+    addLabel: 'Add category to Debt',
+  },
+  {
+    id: 'INVESTMENTS',
+    label: 'Investments',
+    emoji: '📈',
+    hint: 'Growing your money over time.',
+    addLabel: 'Add category to Investments',
+  },
+  {
+    id: 'INCOME',
+    label: 'Income',
+    emoji: '🪙',
+    hint: 'The kinds of money coming in.',
+    addLabel: 'Add income category',
+  },
+  {
+    id: 'SOURCES',
+    label: 'Income Sources',
+    emoji: '🏛️',
+    hint: 'Who pays you, like an employer or client.',
+    addLabel: 'Add income source',
+  },
 ]
 
 const ADD_CHOICES: { kind: ItemKind; emoji: string; title: string; hint: string }[] = [
   { kind: 'expense', emoji: '🛒', title: 'Expense category', hint: 'For your everyday spending' },
   { kind: 'income', emoji: '🪙', title: 'Income category', hint: 'For money coming in' },
-  { kind: 'source', emoji: '🏛️', title: 'Income source', hint: 'Who pays you, like an employer or client' },
+  {
+    kind: 'source',
+    emoji: '🏛️',
+    title: 'Income source',
+    hint: 'Who pays you, like an employer or client',
+  },
 ]
 
 type Item = Category | IncomeSource
@@ -142,9 +190,9 @@ function Categories() {
   return (
     <div className="page categories">
       <PageHeader title="Categories">
-        <button type="button" className="btn btn--primary categories__add" onClick={() => setPopup({ type: 'choose' })}>
+        <Button type="button" onClick={() => setPopup({ type: 'choose' })}>
           <Plus size={18} /> Add
-        </button>
+        </Button>
       </PageHeader>
 
       <div className="tiles">

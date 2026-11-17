@@ -5,6 +5,8 @@ import { accountTypes } from '../../lib/accountTypes'
 import { toStoredBalance } from '../../lib/accountBalance'
 import { today } from '../../lib/dates'
 import type { Account, AccountType } from '../../lib/types'
+import { Button } from '@/components/ui/button'
+import ListPicker from '../ListPicker'
 
 // What the API expects (credit card balances already negative)
 export type AccountValues = {
@@ -64,20 +66,21 @@ function AccountFormModal({ account, onClose, onSubmit }: Props) {
           />
         </label>
 
-        <label className="form-field">
-          <span className="form-field__label">Type</span>
-          <select
-            className="form-input form-select"
+        <div className="form-field">
+          <span className="form-field__label" id="account-type-label">
+            Type
+          </span>
+          <ListPicker<AccountType>
+            title="Account type"
+            labelId="account-type-label"
             value={type}
-            onChange={(e) => setType(e.target.value as AccountType)}
-          >
-            {Object.entries(accountTypes).map(([id, { label }]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={Object.entries(accountTypes).map(([id, { label }]) => ({
+              value: id as AccountType,
+              label,
+            }))}
+            onChange={setType}
+          />
+        </div>
 
         <label className="form-field">
           <span className="form-field__label">{isCard ? 'Amount owed' : 'Opening balance'}</span>
@@ -102,16 +105,16 @@ function AccountFormModal({ account, onClose, onSubmit }: Props) {
         )}
 
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="btn btn--primary"
+            size="lg"
             disabled={!name.trim() || !amount.trim() || !openingDate || saving}
           >
             {account ? 'Save changes' : 'Create account'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -8,22 +8,17 @@
   min-height: 42px;
   border-radius: var(--radius-sm);
   background: var(--cream);
+  border: none;
   color: var(--taupe);
+  cursor: pointer;
 }
 
-.filter-select:focus-within {
-  box-shadow: 0 0 0 3px rgba(230, 184, 178, 0.5);
+.filter-select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(109, 63, 208, 0.2);
 }
 
 .filter-select.is-active {
   background: var(--espresso);
   color: var(--cream);
-}
-
-.filter-select select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  cursor: pointer;
 }

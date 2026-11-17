@@ -43,6 +43,16 @@ function daysFor(year: number, month: number) {
   })
 }
 
+// The nearest parent that scrolls (e.g. a popup's content), if any
+function scrollParent(el: HTMLElement | null) {
+  for (let node = el?.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node)
+    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight)
+      return node
+  }
+  return null
+}
+
 // A date field that drops down a calendar. Clicking a day only highlights it;
 // Confirm applies it, and Close, Escape or clicking outside leave the date as it was.
 function DatePicker({ value, onChange, min, max }: Props) {
@@ -55,28 +65,46 @@ function DatePicker({ value, onChange, min, max }: Props) {
   useDismiss(ref, open, () => setOpen(false))
 
   // The calendar floats (position: fixed) so it never stretches the form.
-  // It drops down from the field, or opens upwards if there's no room below,
-  // with a little pointer aimed at the field. It's placed by setting its style
+  // It always drops down below the field, with a little pointer aimed at it.
+  // If there's no room below, the form scrolls up first to make room; on a
+  // very short screen it sits as low as it can and hides the pointer, so the
+  // pointer never aims at a different field. It's placed by setting its style
   // directly: this is measuring the page, not app data, so it doesn't need
   // React state. Runs again on scroll and resize.
   useLayoutEffect(() => {
     if (!open) return
+    const gap = 12
+    const edge = 8 // keep this far from the window's edges
 
     function place() {
       const field = fieldRef.current?.getBoundingClientRect()
       const panel = panelRef.current
       if (!field || !panel) return
-      const gap = 12
-      const edge = 8 // keep this far from the window's edges
 
-      const fitsBelow = field.bottom + gap + panel.offsetHeight <= window.innerHeight - edge
-      const top = fitsBelow ? field.bottom + gap : field.top - gap - panel.offsetHeight
-      const left = Math.max(edge, Math.min(field.left, window.innerWidth - panel.offsetWidth - edge))
+      const below = field.bottom + gap
+      const top = Math.max(edge, Math.min(below, window.innerHeight - edge - panel.offsetHeight))
+      const left = Math.max(
+        edge,
+        Math.min(field.left, window.innerWidth - panel.offsetWidth - edge),
+      )
 
-      panel.style.top = `${Math.max(edge, top)}px`
+      panel.style.top = `${top}px`
       panel.style.left = `${left}px`
       panel.style.setProperty('--pointer-x', `${field.left + 28 - left}px`)
-      panel.classList.toggle('is-above', !fitsBelow)
+      panel.classList.toggle('no-pointer', top !== below)
+    }
+
+    // On opening only (not while you scroll), make room below if needed
+    const field = fieldRef.current
+    const panel = panelRef.current
+    if (field && panel) {
+      const short =
+        field.getBoundingClientRect().bottom +
+        gap +
+        panel.offsetHeight -
+        (window.innerHeight - edge)
+      const scroller = scrollParent(field)
+      if (short > 0 && scroller) scroller.scrollTop += short
     }
 
     place()

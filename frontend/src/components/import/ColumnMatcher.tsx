@@ -1,5 +1,6 @@
 import type { AccountMapping, AmountMapping, Mapping } from '../../lib/import/detect'
 import { DATE_FORMATS, type DateFormat } from '../../lib/import/parse'
+import ListPicker from '../ListPicker'
 
 export type ColumnChoice = { index: number; label: string }
 
@@ -27,18 +28,16 @@ function ColumnSelect({
   return (
     <label className="form-field">
       <span className="form-field__label">{label}</span>
-      <select
-        className="form-input form-select"
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-      >
-        <option value="">{optional ? 'None' : 'Choose a column'}</option>
-        {columns.map((c) => (
-          <option key={c.index} value={c.index}>
-            {c.label}
-          </option>
-        ))}
-      </select>
+      <ListPicker
+        title={label}
+        value={value === null ? '' : String(value)}
+        options={[
+          ...(optional ? [{ value: '', label: 'None' }] : []),
+          ...columns.map((c) => ({ value: String(c.index), label: c.label })),
+        ]}
+        onChange={(v) => onChange(v === '' ? null : Number(v))}
+        placeholder="Choose a column"
+      />
     </label>
   )
 }
@@ -81,18 +80,15 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
         />
         <label className="form-field">
           <span className="form-field__label">Dates are written like</span>
-          <select
-            className="form-input form-select"
+          <ListPicker
+            title="Date format"
             value={mapping.dateFormat ?? ''}
-            onChange={(e) => set({ dateFormat: (e.target.value || null) as DateFormat | null })}
-          >
-            <option value="">Choose a format</option>
-            {DATE_FORMATS.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+            options={DATE_FORMATS.map((f) => ({ value: f.id, label: f.label }))}
+            onChange={(dateFormat) =>
+              set({ dateFormat: (dateFormat || null) as DateFormat | null })
+            }
+            placeholder="Choose a format"
+          />
           {ambiguousDates && !mapping.dateFormat && (
             <span className="column-matcher__hint">
               These dates could be day/month or month/day, so please choose.
@@ -103,18 +99,12 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
 
       <label className="form-field">
         <span className="form-field__label">How are amounts written?</span>
-        <select
-          className="form-input form-select"
+        <ListPicker
+          title="Amounts"
           value={amount?.style ?? ''}
-          onChange={(e) => changeStyle(e.target.value as AmountMapping['style'])}
-        >
-          {!amount && <option value="">Choose</option>}
-          {STYLES.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+          options={STYLES.map((s) => ({ value: s.id, label: s.label }))}
+          onChange={(style) => changeStyle(style as AmountMapping['style'])}
+        />
       </label>
 
       {amount?.style === 'typed' && (
@@ -166,16 +156,15 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
           />
           <label className="form-field">
             <span className="form-field__label">Negative amounts are</span>
-            <select
-              className="form-input form-select"
+            <ListPicker<'EXPENSE' | 'INCOME'>
+              title="Negative amounts are"
               value={amount.negativeIs}
-              onChange={(e) =>
-                set({ amount: { ...amount, negativeIs: e.target.value as 'EXPENSE' | 'INCOME' } })
-              }
-            >
-              <option value="EXPENSE">Spending (positive is income)</option>
-              <option value="INCOME">Income (positive is spending)</option>
-            </select>
+              options={[
+                { value: 'EXPENSE', label: 'Spending (positive is income)' },
+                { value: 'INCOME', label: 'Income (positive is spending)' },
+              ]}
+              onChange={(negativeIs) => set({ amount: { ...amount, negativeIs } })}
+            />
           </label>
         </div>
       )}
@@ -200,15 +189,16 @@ function ColumnMatcher({ columns, mapping, ambiguousDates, onChange }: Props) {
       <div className="column-matcher__grid">
         <label className="form-field">
           <span className="form-field__label">Which account?</span>
-          <select
-            className="form-input form-select"
+          <ListPicker<AccountMapping['kind'] | ''>
+            title="Which account?"
             value={mapping.account?.kind ?? ''}
-            onChange={(e) => changeAccountKind(e.target.value as AccountMapping['kind'] | '')}
-          >
-            <option value="">I'll choose one for the whole file</option>
-            <option value="column">A column names the account</option>
-            <option value="cardFlag">A TRUE/FALSE column says "on a credit card"</option>
-          </select>
+            options={[
+              { value: '', label: "I'll choose one for the whole file" },
+              { value: 'column', label: 'A column names the account' },
+              { value: 'cardFlag', label: 'A TRUE/FALSE column says "on a credit card"' },
+            ]}
+            onChange={changeAccountKind}
+          />
         </label>
         {mapping.account && (
           <ColumnSelect

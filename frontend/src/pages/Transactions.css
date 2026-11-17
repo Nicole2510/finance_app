@@ -19,13 +19,6 @@
   text-align: center;
 }
 
-.transactions__add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-}
-
 .transactions__actions {
   display: flex;
   gap: 10px;
@@ -74,9 +67,4 @@
 .transactions__selection span {
   flex: 1;
   font-variant-numeric: tabular-nums;
-}
-
-.transactions__selection .btn {
-  padding: 7px 14px;
-  font-size: 14px;
 }

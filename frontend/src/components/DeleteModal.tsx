@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import Modal from './Modal'
+import { Button } from '@/components/ui/button'
 
 type Props = {
   name: string
@@ -57,17 +58,17 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
         )}
 
         <div className="modal-actions">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+          <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
           {error && onArchive ? (
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={archive}>
+            <Button type="button" size="lg" disabled={busy} onClick={archive}>
               Archive instead
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={remove}>
+            <Button type="button" variant="destructive" size="lg" disabled={busy} onClick={remove}>
               Delete
-            </button>
+            </Button>
           )}
         </div>
       </div>

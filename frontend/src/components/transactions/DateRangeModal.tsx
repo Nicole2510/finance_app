@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Modal from '../Modal'
 import DatePicker from '../DatePicker'
+import { Button } from '@/components/ui/button'
 
 export type DateRange = { from: string; to: string }
 
@@ -33,17 +34,12 @@ function DateRangeModal({ initial, onApply, onClose }: Props) {
         </p>
       )}
       <div className="modal-actions">
-        <button type="button" className="btn btn--secondary" onClick={onClose}>
+        <Button type="button" variant="outline" size="lg" onClick={onClose}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={backwards}
-          onClick={() => onApply({ from, to })}
-        >
+        </Button>
+        <Button type="button" size="lg" disabled={backwards} onClick={() => onApply({ from, to })}>
           Show these dates
-        </button>
+        </Button>
       </div>
     </Modal>
   )

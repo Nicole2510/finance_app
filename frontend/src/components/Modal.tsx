@@ -1,5 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { PortalContainer } from '../lib/portalContainer'
 import './Modal.css'
 
 type Props = {
@@ -14,16 +15,16 @@ type Props = {
 // Popup built on the browser's <dialog>, which gives us Escape-to-close,
 // focus trapping and screen-reader support for free
 function Modal({ title, badge, onClose, variant = 'dialog', children }: Props) {
-  const ref = useRef<HTMLDialogElement>(null)
+  // Kept in state (not a ref) so dropdowns inside can be drawn in this dialog
+  const [dialog, setDialog] = useState<HTMLDialogElement | null>(null)
 
   useEffect(() => {
-    const dialog = ref.current
     if (dialog && !dialog.open) dialog.showModal()
-  }, [])
+  }, [dialog])
 
   return (
     <dialog
-      ref={ref}
+      ref={setDialog}
       className={`modal modal--${variant}`}
       aria-label={title}
       onCancel={(e) => {
@@ -44,7 +45,9 @@ function Modal({ title, badge, onClose, variant = 'dialog', children }: Props) {
           {title && <h2 className="modal__title">{title}</h2>}
           {badge}
         </div>
-        <div className="modal__content">{children}</div>
+        <div className="modal__content">
+          <PortalContainer value={dialog}>{children}</PortalContainer>
+        </div>
       </div>
     </dialog>
   )

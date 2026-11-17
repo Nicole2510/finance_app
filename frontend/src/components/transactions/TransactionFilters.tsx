@@ -3,6 +3,7 @@ import type { Filters } from '../../lib/transactionFilters'
 import type { Account } from '../../lib/types'
 import FilterSelect from '../FilterSelect'
 import './TransactionFilters.css'
+import ListPicker from '../ListPicker'
 
 type Props = {
   filters: Filters
@@ -60,19 +61,18 @@ function TransactionFilters({
         onChange={(type) => onChange({ ...filters, type })}
       />
 
-      <select
+      <ListPicker
+        title="Account"
+        ariaLabel="Filter by account"
+        size="small"
         className="transaction-filters__account"
         value={filters.accountId}
-        aria-label="Filter by account"
-        onChange={(e) => onChange({ ...filters, accountId: e.target.value })}
-      >
-        <option value="ALL">All accounts</option>
-        {accounts.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.name}
-          </option>
-        ))}
-      </select>
+        options={[
+          { value: 'ALL', label: 'All accounts' },
+          ...accounts.map((a) => ({ value: a.id, label: a.name })),
+        ]}
+        onChange={(accountId) => onChange({ ...filters, accountId })}
+      />
 
       {filtering && (
         <button type="button" className="transaction-filters__clear" onClick={onClear}>
