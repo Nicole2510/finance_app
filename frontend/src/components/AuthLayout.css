@@ -93,7 +93,7 @@
 
 .auth__button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -10px rgba(47, 39, 36, 0.5);
+  box-shadow: 0 8px 20px -10px rgba(30, 27, 46, 0.5);
 }
 
 .auth__button--primary {

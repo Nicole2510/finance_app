@@ -1,30 +1,85 @@
-/* Nayad design tokens — warm neutral palette from the design target */
-:root {
-  --espresso: #2f2724;
-  --espresso-soft: #4a3f3a;
-  --taupe: #8c7b73;
-  --sand: #e8dfd8;
-  --cream: #f6f1ec;
-  --surface: #ffffff;
-  --app-bg: #faf7f4;
-  --highlight: #f1e9e2;
-  --blush: #e6b8b2;
-  --rose: #d98a80;
-  --sage: #7d9a82;
-  --forest: #2f5d46;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/geist';
 
-  --text: var(--espresso);
-  --text-muted: var(--taupe);
-  --border: var(--sand);
+@custom-variant dark (&:is(.dark *));
+
+/* Nayad design tokens: cool lavender palette with a violet accent.
+   Old names (espresso, taupe…) are kept so existing CSS keeps working while
+   components move to Tailwind; shadcn's names point at the same colours. */
+:root {
+  /* The palette */
+  --violet: #6d3fd0;
+  --violet-strong: #5a2fb8;
+  --ink: #1e1b2e;
+  --ink-soft: #3b3654;
+  --slate: #6b6880;
+  --line: #e7e4f0;
+  --lavender: #f3f0fa;
+  --lavender-deep: #ebe5fa;
+  --mist: #f7f5fc;
+  --green: #2f8a5b;
+  --red: #b84653;
+
+  /* Older names, now mapped onto the palette */
+  --espresso: var(--ink);
+  --espresso-soft: var(--ink-soft);
+  --taupe: var(--slate);
+  --sand: var(--line);
+  --cream: var(--lavender);
+  --surface: #ffffff;
+  --app-bg: #ffffff;
+  --highlight: var(--lavender-deep);
+  --blush: #f3d3d8;
+  --rose: #d06a75;
+  --sage: #6fae8a;
+  --forest: var(--green);
+
+  --text: var(--ink);
+  --text-muted: var(--slate);
 
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-soft: 0 12px 32px -16px rgba(47, 39, 36, 0.22);
+  --shadow-soft: 0 12px 32px -16px rgba(30, 27, 46, 0.18);
 
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  /* Headings and the logo; swap in a serif here to change them everywhere */
+  --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-sans);
+
+  /* shadcn/ui names */
+  --background: #ffffff;
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--violet);
+  --primary-foreground: #ffffff;
+  --secondary: var(--lavender);
+  --secondary-foreground: var(--ink);
+  --muted: var(--lavender);
+  --muted-foreground: var(--slate);
+  --accent: var(--lavender-deep);
+  --accent-foreground: var(--ink);
+  --destructive: var(--red);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--violet);
+  --chart-1: #6d3fd0;
+  --chart-2: #9b7be3;
+  --chart-3: #2f8a5b;
+  --chart-4: #d06a75;
+  --chart-5: #e0a54b;
+  --radius: 0.625rem;
+  --sidebar: var(--mist);
+  --sidebar-foreground: var(--ink-soft);
+  --sidebar-primary: var(--violet);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--lavender-deep);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--violet);
 
   font-family: var(--font-sans);
   font-size: 16px;
@@ -93,4 +148,59 @@ img {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--taupe) padding-box;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
