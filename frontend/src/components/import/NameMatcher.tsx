@@ -137,7 +137,7 @@ function NameMatcher({
                 />
 
                 {choice?.kind === 'new' && (
-                  <div className="grid grid-cols-[1fr_auto] gap-2 [&>.emoji-picker]:col-span-full">
+                  <div className="grid grid-cols-[1fr_auto] gap-2 [&>:first-child]:col-span-full">
                     <EmojiPicker
                       value={choice.emoji}
                       suggestions={name.type === 'INCOME' ? INCOME_EMOJI : SPENDING_EMOJI}

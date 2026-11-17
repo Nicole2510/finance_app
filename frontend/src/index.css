@@ -154,6 +154,20 @@
   background: var(--taupe) padding-box;
 }
 
+/* A toast's countdown bar: shrinks over 5 seconds, then the toast closes */
+@theme {
+  --animate-toast-timer: toast-timer 5s linear forwards;
+
+  @keyframes toast-timer {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', system-ui, sans-serif;
