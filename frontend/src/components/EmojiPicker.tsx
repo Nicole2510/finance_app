@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MoreHorizontal } from 'lucide-react'
 import './EmojiPicker.css'
 import { Button } from '@/components/ui/button'
+import { Input } from './form'
 
 // A curated set for money categories; any emoji can also be typed
 const ALL_EMOJIS = [
@@ -103,8 +104,8 @@ function EmojiPicker({ value, onChange, suggestions }: Props) {
           <div className="emoji-picker__grid">{ALL_EMOJIS.map(option)}</div>
 
           <div className="emoji-picker__custom">
-            <input
-              className="form-input"
+            <Input
+              className="min-w-0 flex-1"
               value={custom}
               placeholder="Or type any emoji"
               aria-label="Type any emoji"

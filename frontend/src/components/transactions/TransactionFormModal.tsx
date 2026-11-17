@@ -9,6 +9,7 @@ import './TransactionFormModal.css'
 import { Button } from '@/components/ui/button'
 import CategoryPicker from '../CategoryPicker'
 import ListPicker from '../ListPicker'
+import { Field, FieldLabel, FormActions, FormError, Input } from '../form'
 
 // What the API expects
 export type TransactionValues = {
@@ -142,20 +143,19 @@ function TransactionFormModal({
           </div>
         )}
 
-        <label className="form-field">
-          <span className="form-field__label">Amount</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Amount</FieldLabel>
+          <Input
             value={amount}
             inputMode="decimal"
             placeholder="0.00"
             autoFocus
             onChange={(e) => setAmount(e.target.value)}
           />
-        </label>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label">Date</span>
+        <Field as="div">
+          <FieldLabel>Date</FieldLabel>
           <DatePicker value={date} max={today()} onChange={setDate} />
           {account && date < account.openingDate && (
             <span className="transaction-form__history">
@@ -163,12 +163,12 @@ function TransactionFormModal({
               history, and doesn't change the balance.
             </span>
           )}
-        </div>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label" id="account-label">
+        <Field as="div">
+          <FieldLabel id="account-label">
             {type === 'INCOME' ? 'Paid into' : 'Paid from'}
-          </span>
+          </FieldLabel>
           <ListPicker
             title={type === 'INCOME' ? 'Paid into' : 'Paid from'}
             labelId="account-label"
@@ -177,12 +177,10 @@ function TransactionFormModal({
             onChange={setAccountId}
             placeholder="Choose an account"
           />
-        </div>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label" id="category-label">
-            Category
-          </span>
+        <Field as="div">
+          <FieldLabel id="category-label">Category</FieldLabel>
           {/* A floating card drawn by the app, so it stays inside the window */}
           <CategoryPicker
             categories={categoryOptions}
@@ -190,13 +188,11 @@ function TransactionFormModal({
             onChange={setCategoryId}
             labelId="category-label"
           />
-        </div>
+        </Field>
 
         {type === 'INCOME' && (
-          <div className="form-field">
-            <span className="form-field__label" id="source-label">
-              Income source (optional)
-            </span>
+          <Field as="div">
+            <FieldLabel id="source-label">Income source (optional)</FieldLabel>
             <ListPicker
               title="Income source"
               labelId="source-label"
@@ -207,27 +203,22 @@ function TransactionFormModal({
               ]}
               onChange={setSourceId}
             />
-          </div>
+          </Field>
         )}
 
-        <label className="form-field">
-          <span className="form-field__label">Notes (optional)</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Notes (optional)</FieldLabel>
+          <Input
             value={notes}
             maxLength={200}
             placeholder="e.g. Weekly shop"
             onChange={(e) => setNotes(e.target.value)}
           />
-        </label>
+        </Field>
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
+        <FormActions>
           <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
           </Button>
@@ -238,7 +229,7 @@ function TransactionFormModal({
           >
             {t ? 'Save changes' : 'Add transaction'}
           </Button>
-        </div>
+        </FormActions>
 
         {t && onDelete && (
           <button type="button" className="transaction-form__delete" onClick={onDelete}>

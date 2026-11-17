@@ -4,6 +4,7 @@ import EmojiPicker from './EmojiPicker'
 import type { CategoryGroup } from '../lib/types'
 import { Button } from '@/components/ui/button'
 import ListPicker from './ListPicker'
+import { Field, FieldLabel, FormActions, FormError, Input } from './form'
 
 export type ItemKind = 'expense' | 'income' | 'source'
 
@@ -64,28 +65,25 @@ function ItemFormModal({ kind, initial, isEditing, onClose, onSubmit }: Props) {
   return (
     <Modal title={title} onClose={onClose}>
       <form onSubmit={submit}>
-        <label className="form-field">
-          <span className="form-field__label">Name</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Name</FieldLabel>
+          <Input
             value={name}
             maxLength={40}
             autoFocus
             placeholder={kind === 'source' ? 'e.g. Acme' : 'e.g. Groceries'}
             onChange={(e) => setName(e.target.value)}
           />
-        </label>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label">Icon</span>
+        <Field as="div">
+          <FieldLabel>Icon</FieldLabel>
           <EmojiPicker value={emoji} onChange={setEmoji} suggestions={SUGGESTIONS[kind]} />
-        </div>
+        </Field>
 
         {kind === 'expense' && (
-          <div className="form-field">
-            <span className="form-field__label" id="group-label">
-              Budget group
-            </span>
+          <Field as="div">
+            <FieldLabel id="group-label">Budget group</FieldLabel>
             <ListPicker<CategoryGroup>
               title="Budget group"
               labelId="group-label"
@@ -93,23 +91,19 @@ function ItemFormModal({ kind, initial, isEditing, onClose, onSubmit }: Props) {
               options={EXPENSE_GROUPS.map((g) => ({ value: g.id, label: g.label }))}
               onChange={setGroup}
             />
-          </div>
+          </Field>
         )}
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
+        <FormActions>
           <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" size="lg" disabled={!name.trim() || saving}>
             {isEditing ? 'Save changes' : `Create ${kind === 'source' ? 'source' : 'category'}`}
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Modal>
   )

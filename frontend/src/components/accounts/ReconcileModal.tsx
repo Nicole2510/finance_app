@@ -4,6 +4,7 @@ import { balanceText, toStoredBalance } from '../../lib/accountBalance'
 import { formatMoney } from '../../lib/money'
 import type { Account } from '../../lib/types'
 import { Button } from '@/components/ui/button'
+import { Field, FieldLabel, FormActions, FormError, Input } from '../form'
 
 type Props = {
   account: Account
@@ -54,19 +55,18 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
           In Nayad: <strong>{balanceText(account.type, account.currentBalance)}</strong>
         </p>
 
-        <label className="form-field">
-          <span className="form-field__label">
+        <Field>
+          <FieldLabel>
             {isCard ? 'Amount owed, according to your bank' : 'Balance, according to your bank'}
-          </span>
-          <input
-            className="form-input"
+          </FieldLabel>
+          <Input
             value={entered}
             inputMode="decimal"
             placeholder="0.00"
             autoFocus
             onChange={(e) => setEntered(e.target.value)}
           />
-        </label>
+        </Field>
 
         {preview() && (
           <p className="reconcile__preview" aria-live="polite">
@@ -75,20 +75,16 @@ function ReconcileModal({ account, onClose, onSubmit }: Props) {
           </p>
         )}
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
+        <FormActions>
           <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" size="lg" disabled={!diff || saving}>
             Add adjustment
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Modal>
   )

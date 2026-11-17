@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router'
 import ClerkWithRouter from './components/ClerkWithRouter.tsx'
 import App from './App.tsx'
 import './index.css'
-import './styles/forms.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatDate } from '../lib/dates'
+import { inputClasses } from '../lib/formStyles'
 import { useDismiss } from '../lib/useDismiss'
 import './DatePicker.css'
 
@@ -157,7 +159,7 @@ function DatePicker({ value, onChange, min, max }: Props) {
       <button
         type="button"
         ref={fieldRef}
-        className="form-input date-picker__field"
+        className={cn(inputClasses, 'date-picker__field')}
         aria-expanded={open}
         onClick={() => {
           if (!open) setView(parse(value))
@@ -172,7 +174,7 @@ function DatePicker({ value, onChange, min, max }: Props) {
         <div ref={panelRef} className="date-picker__panel" role="group" aria-label="Choose a date">
           <div className="date-picker__header">
             <select
-              className="form-select date-picker__select"
+              className="date-picker__select"
               aria-label="Month"
               value={view.month}
               onChange={(e) => setView({ ...view, month: Number(e.target.value) })}
@@ -184,7 +186,7 @@ function DatePicker({ value, onChange, min, max }: Props) {
               ))}
             </select>
             <select
-              className="form-select date-picker__select"
+              className="date-picker__select"
               aria-label="Year"
               value={view.year}
               onChange={(e) => showYear(Number(e.target.value))}

@@ -39,6 +39,7 @@ import ReviewTable from './ReviewTable'
 import './ImportModal.css'
 import { Button } from '@/components/ui/button'
 import ListPicker from '../ListPicker'
+import { Field, FieldLabel, FormActions, FormError } from '../form'
 
 type Props = {
   accounts: Account[]
@@ -297,12 +298,8 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           accounts={accounts}
           onChange={(row) => setReviewRows((rows) => rows.map((r) => (r.id === row.id ? row : r)))}
         />
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="modal-actions">
+        {error && <FormError role="alert">{error}</FormError>}
+        <FormActions className="mt-6">
           <Button type="button" variant="outline" size="lg" onClick={() => setStep('names')}>
             Back
           </Button>
@@ -314,7 +311,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           >
             {busy ? 'Importing…' : `Import ${summary.importing}`}
           </Button>
-        </div>
+        </FormActions>
       </Modal>
     )
   }
@@ -341,19 +338,15 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           onCategoryChange={(key, choice) => setCategoryChoices((c) => ({ ...c, [key]: choice }))}
           onAccountChange={(name, id) => setAccountChoices((c) => ({ ...c, [name]: id }))}
         />
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="modal-actions">
+        {error && <FormError role="alert">{error}</FormError>}
+        <FormActions className="mt-6">
           <Button type="button" variant="outline" size="lg" onClick={() => setStep('columns')}>
             Back
           </Button>
           <Button type="button" size="lg" disabled={!namesDone || busy} onClick={goToReview}>
             {busy ? 'Checking…' : namesDone ? 'Next: review' : 'Choose the rest to continue'}
           </Button>
-        </div>
+        </FormActions>
       </Modal>
     )
   }
@@ -382,7 +375,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           onChange={setMapping}
         />
         <ReadPreview results={read} />
-        <div className="modal-actions">
+        <FormActions className="mt-6">
           <Button type="button" variant="outline" size="lg" onClick={() => setStep('file')}>
             Back
           </Button>
@@ -394,7 +387,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
           >
             Next: match names
           </Button>
-        </div>
+        </FormActions>
       </Modal>
     )
   }
@@ -422,29 +415,25 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
         />
       </label>
 
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <FormError role="alert">{error}</FormError>}
 
       {rows && (
         <>
           {sheets && sheets.length > 1 && (
-            <label className="form-field">
-              <span className="form-field__label">Which sheet has the transactions?</span>
+            <Field>
+              <FieldLabel>Which sheet has the transactions?</FieldLabel>
               <ListPicker
                 title="Sheet"
                 value={String(sheetIndex)}
                 options={sheets.map((sheet, i) => ({ value: String(i), label: sheet.name }))}
                 onChange={(i) => chooseSheet(Number(i))}
               />
-            </label>
+            </Field>
           )}
 
           {tables.length > 1 && (
-            <label className="form-field">
-              <span className="form-field__label">Which table has the transactions?</span>
+            <Field>
+              <FieldLabel>Which table has the transactions?</FieldLabel>
               <ListPicker
                 title="Table"
                 value={String(tableIndex)}
@@ -454,7 +443,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
                 }))}
                 onChange={(i) => setTableIndex(Number(i))}
               />
-            </label>
+            </Field>
           )}
 
           {table || withoutHeadings ? (
@@ -465,10 +454,10 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
               Other tables and summaries on the sheet are left out.
             </p>
           ) : (
-            <label className="form-field">
-              <span className="form-field__label">
+            <Field>
+              <FieldLabel>
                 No transactions table was found automatically. Which row has the column headings?
-              </span>
+              </FieldLabel>
               <ListPicker
                 title="Heading row"
                 value={String(manualHeaderRow)}
@@ -478,7 +467,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
                 }))}
                 onChange={(i) => setManualHeaderRow(Number(i))}
               />
-            </label>
+            </Field>
           )}
 
           <div className="import__table-wrap">
@@ -509,7 +498,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
         </>
       )}
 
-      <div className="modal-actions">
+      <FormActions className="mt-6">
         <Button type="button" variant="outline" size="lg" onClick={onClose}>
           Cancel
         </Button>
@@ -521,7 +510,7 @@ function ImportModal({ accounts, categories, onClose, onImported, onCategoriesCh
         >
           Next: match columns
         </Button>
-      </div>
+      </FormActions>
     </Modal>
   )
 }

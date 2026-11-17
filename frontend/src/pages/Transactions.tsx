@@ -21,6 +21,7 @@ import TransactionFormModal, {
 import './Page.css'
 import './Transactions.css'
 import { Button } from '@/components/ui/button'
+import { FormError } from '../components/form'
 
 // The importer and its file readers only download the first time Import is used
 const ImportModal = lazy(() => import('../components/import/ImportModal'))
@@ -224,7 +225,7 @@ function Transactions() {
       </div>
 
       {current?.error ? (
-        <p className="form-error">{current.error}</p>
+        <FormError>{current.error}</FormError>
       ) : !transactions ? (
         <p>Loading...</p>
       ) : (

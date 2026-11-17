@@ -10,6 +10,7 @@ import PageHeader from '../components/PageHeader'
 import './Page.css'
 import './Categories.css'
 import { Button } from '@/components/ui/button'
+import { FormError } from '../components/form'
 
 type TileId = CategoryGroup | 'SOURCES'
 
@@ -112,7 +113,7 @@ function Categories() {
   }, [apiFetch])
 
   if (!categories || !sources) {
-    return loadError ? <p className="form-error">{loadError}</p> : <p>Loading...</p>
+    return loadError ? <FormError>{loadError}</FormError> : <p>Loading...</p>
   }
 
   function itemsFor(tile: TileId): Item[] {

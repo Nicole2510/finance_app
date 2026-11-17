@@ -7,6 +7,7 @@ import { today } from '../../lib/dates'
 import type { Account, AccountType } from '../../lib/types'
 import { Button } from '@/components/ui/button'
 import ListPicker from '../ListPicker'
+import { Field, FieldLabel, FormActions, FormError, Input } from '../form'
 
 // What the API expects (credit card balances already negative)
 export type AccountValues = {
@@ -54,22 +55,19 @@ function AccountFormModal({ account, onClose, onSubmit }: Props) {
   return (
     <Modal title={account ? 'Edit account' : 'Add account'} onClose={onClose}>
       <form onSubmit={submit}>
-        <label className="form-field">
-          <span className="form-field__label">Name</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>Name</FieldLabel>
+          <Input
             value={name}
             maxLength={40}
             autoFocus
             placeholder="e.g. Maple Bank"
             onChange={(e) => setName(e.target.value)}
           />
-        </label>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label" id="account-type-label">
-            Type
-          </span>
+        <Field as="div">
+          <FieldLabel id="account-type-label">Type</FieldLabel>
           <ListPicker<AccountType>
             title="Account type"
             labelId="account-type-label"
@@ -80,31 +78,26 @@ function AccountFormModal({ account, onClose, onSubmit }: Props) {
             }))}
             onChange={setType}
           />
-        </div>
+        </Field>
 
-        <label className="form-field">
-          <span className="form-field__label">{isCard ? 'Amount owed' : 'Opening balance'}</span>
-          <input
-            className="form-input"
+        <Field>
+          <FieldLabel>{isCard ? 'Amount owed' : 'Opening balance'}</FieldLabel>
+          <Input
             value={amount}
             inputMode="decimal"
             placeholder="0.00"
             onChange={(e) => setAmount(e.target.value)}
           />
-        </label>
+        </Field>
 
-        <div className="form-field">
-          <span className="form-field__label">Balance as of</span>
+        <Field as="div">
+          <FieldLabel>Balance as of</FieldLabel>
           <DatePicker value={openingDate} max={today()} onChange={setOpeningDate} />
-        </div>
+        </Field>
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError role="alert">{error}</FormError>}
 
-        <div className="modal-actions">
+        <FormActions>
           <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
           </Button>
@@ -115,7 +108,7 @@ function AccountFormModal({ account, onClose, onSubmit }: Props) {
           >
             {account ? 'Save changes' : 'Create account'}
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Modal>
   )

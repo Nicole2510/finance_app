@@ -57,11 +57,6 @@
   margin-top: 12px;
 }
 
-.emoji-picker__custom .form-input {
-  flex: 1;
-  min-width: 0;
-}
-
 .emoji-picker__none {
   margin-top: 8px;
   padding: 4px 0;

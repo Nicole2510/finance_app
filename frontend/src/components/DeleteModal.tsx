@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import Modal from './Modal'
 import { Button } from '@/components/ui/button'
+import { FormActions, FormError } from './form'
 
 type Props = {
   name: string
@@ -46,9 +47,7 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
         </h2>
 
         {error ? (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <FormError role="alert">{error}</FormError>
         ) : (
           <p className="delete-modal__note">
             {details
@@ -57,7 +56,7 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
           </p>
         )}
 
-        <div className="modal-actions">
+        <FormActions>
           <Button type="button" variant="outline" size="lg" onClick={onClose}>
             Cancel
           </Button>
@@ -70,7 +69,7 @@ function DeleteModal({ name, question, kindLabel, details, onClose, onDelete, on
               Delete
             </Button>
           )}
-        </div>
+        </FormActions>
       </div>
     </Modal>
   )

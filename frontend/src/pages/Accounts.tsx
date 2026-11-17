@@ -16,6 +16,7 @@ import type { TypeFilter } from '../components/accounts/AccountFilters'
 import './Page.css'
 import './Accounts.css'
 import { Button } from '@/components/ui/button'
+import { FormError } from '../components/form'
 
 const TYPE_ORDER = Object.keys(accountTypes) as AccountType[]
 
@@ -154,7 +155,7 @@ function Accounts() {
       </PageHeader>
 
       {loadError ? (
-        <p className="form-error">{loadError}</p>
+        <FormError>{loadError}</FormError>
       ) : !accounts ? (
         <p>Loading...</p>
       ) : all.length === 0 ? (
@@ -173,11 +174,7 @@ function Accounts() {
             onClear={clearFilters}
           />
           <div className="accounts__panel">
-            {actionError && (
-              <p className="form-error" role="alert">
-                {actionError}
-              </p>
-            )}
+            {actionError && <FormError role="alert">{actionError}</FormError>}
             {selected ? (
               <AccountDetails
                 account={selected}

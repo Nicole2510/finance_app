@@ -4,6 +4,7 @@ import { categoryGroups, GROUP_ORDER } from '../../lib/categoryGroups'
 import EmojiPicker from '../EmojiPicker'
 import { cleanName, emojiOf, type CategoryChoice, type NameToMatch } from '../../lib/import/names'
 import ListPicker from '../ListPicker'
+import { Input } from '../form'
 
 type Props = {
   names: NameToMatch[]
@@ -131,8 +132,7 @@ function NameMatcher({
                       suggestions={name.type === 'INCOME' ? INCOME_EMOJI : SPENDING_EMOJI}
                       onChange={(emoji) => onCategoryChange(name.key, { ...choice, emoji })}
                     />
-                    <input
-                      className="form-input"
+                    <Input
                       aria-label="New category name"
                       value={choice.name}
                       maxLength={40}
