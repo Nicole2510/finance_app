@@ -177,12 +177,8 @@
   .name-matcher__row { grid-template-columns: 1fr; }
 }
 
-/* Room below the last box so it never hugs the popup's bottom edge */
-.modal--large .modal__content {
-  padding-bottom: 40px;
-}
-
-.modal--large .modal-actions {
+/* The importer's big popup: a little more space above its buttons */
+[data-variant='large'] .modal-actions {
   margin-top: 24px;
 }
 
