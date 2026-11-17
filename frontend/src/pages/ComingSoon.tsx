@@ -1,12 +1,11 @@
 import PageHeader from '../components/PageHeader'
-import './Page.css'
 
 // Placeholder for pages we haven't built yet
 function ComingSoon({ title }: { title: string }) {
   return (
-    <div className="page">
+    <div>
       <PageHeader title={title} />
-      <p className="page__subtitle">Coming soon.</p>
+      <p className="mt-1.5 text-muted-foreground">Coming soon.</p>
     </div>
   )
 }

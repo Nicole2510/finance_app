@@ -3,7 +3,6 @@ import { useClerk, useUser } from '@clerk/react'
 import { LogOut, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PageHeader from '../components/PageHeader'
-import './Page.css'
 
 // A white card with a title and a short line under it
 function Card({
@@ -47,7 +46,7 @@ function Settings() {
   const initial = (user.fullName || email).charAt(0).toUpperCase()
 
   return (
-    <div className="page">
+    <div>
       <PageHeader title="Settings" />
 
       <div className="flex max-w-4xl flex-col gap-6">

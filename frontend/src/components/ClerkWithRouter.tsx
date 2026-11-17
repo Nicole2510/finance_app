@@ -17,21 +17,21 @@ function ClerkWithRouter({ children }: { children: ReactNode }) {
       signUpFallbackRedirectUrl="/dashboard"
       afterSignOutUrl="/"
       appearance={{
-        // Put Clerk's styles in a low-priority CSS layer so ours always win
+        // Put Clerk's styles in their own CSS layer, ranked in index.css
         cssLayerName: 'clerk',
-        // Nayad palette for every Clerk component
+        // Nayad palette for every Clerk component (e.g. "Manage account")
         variables: {
-          colorPrimary: '#2f2724',
-          colorPrimaryForeground: '#f6f1ec',
-          colorForeground: '#2f2724',
-          colorMutedForeground: '#8c7b73',
-          colorNeutral: '#2f2724',
+          colorPrimary: '#6d3fd0',
+          colorPrimaryForeground: '#ffffff',
+          colorForeground: '#1e1b2e',
+          colorMutedForeground: '#6b6880',
+          colorNeutral: '#1e1b2e',
           colorBackground: '#ffffff',
-          colorInput: '#f6f1ec',
-          colorInputForeground: '#2f2724',
-          colorBorder: '#e8dfd8',
-          colorRing: 'rgba(217, 138, 128, 0.45)',
-          colorDanger: '#b4544a',
+          colorInput: '#f3f0fa',
+          colorInputForeground: '#1e1b2e',
+          colorBorder: '#e7e4f0',
+          colorRing: 'rgba(109, 63, 208, 0.35)',
+          colorDanger: '#b84653',
           fontFamily: 'inherit',
           borderRadius: '14px',
         },

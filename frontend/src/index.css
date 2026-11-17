@@ -1,3 +1,7 @@
+/* Layer order: Clerk's sign-in styles sit above Tailwind's resets but below
+   our components and utilities, so Tailwind classes can style Clerk's forms */
+@layer theme, base, clerk, components, utilities;
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -6,8 +10,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Nayad design tokens: cool lavender palette with a violet accent.
-   Old names (espresso, taupe…) are kept so existing CSS keeps working while
-   components move to Tailwind; shadcn's names point at the same colours. */
+   shadcn's names (primary, muted…) point at these, and Tailwind classes like
+   bg-primary or text-muted-foreground come from them. */
 :root {
   /* The palette */
   --violet: #6d3fd0;
@@ -22,30 +26,7 @@
   --green: #2f8a5b;
   --red: #b84653;
 
-  /* Older names, now mapped onto the palette */
-  --espresso: var(--ink);
-  --espresso-soft: var(--ink-soft);
-  --taupe: var(--slate);
-  --sand: var(--line);
-  --cream: var(--lavender);
-  --surface: #ffffff;
-  --app-bg: #ffffff;
-  --highlight: var(--lavender-deep);
-  --blush: #f3d3d8;
-  --rose: #d06a75;
-  --sage: #6fae8a;
-  --forest: var(--green);
-
-  --text: var(--ink);
-  --text-muted: var(--slate);
-
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --shadow-soft: 0 12px 32px -16px rgba(30, 27, 46, 0.18);
-
   --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: var(--font-sans);
 
   /* shadcn/ui names */
   --background: #ffffff;
@@ -84,8 +65,8 @@
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--text);
-  background: var(--app-bg);
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -132,7 +113,7 @@
    covers Safari. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--sand) transparent;
+  scrollbar-color: var(--line) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -147,11 +128,20 @@
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: var(--sand) padding-box;
+  background: var(--line) padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--taupe) padding-box;
+  background: var(--slate) padding-box;
+}
+
+/* On the first sign-in / sign-up step our page heading is enough, so hide
+   Clerk's. Later steps (e.g. "Check your email") keep theirs for context. */
+@layer components {
+  .cl-signIn-start .cl-header,
+  .cl-signUp-start .cl-header {
+    display: none;
+  }
 }
 
 /* A toast's countdown bar: shrinks over 5 seconds, then the toast closes */
