@@ -11,7 +11,7 @@ afterAll(() => prisma.$disconnect());
 // routes (e.g. accounts in M3), add them here so they're checked too.
 // `:category` / `:source` are swapped for real IDs owned by Alice, so a
 // passing test proves the request was blocked by sign-in, not a missing ID.
-const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] = [
+const PROTECTED: [method: "get" | "post" | "put" | "patch" | "delete", path: string][] = [
   ["get", "/api/me"],
   ["get", "/api/categories"],
   ["post", "/api/categories"],
@@ -32,6 +32,10 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/transactions/bulk-delete"],
   ["patch", "/api/transactions/:transaction"],
   ["delete", "/api/transactions/:transaction"],
+  ["get", "/api/budgets/2026-10"],
+  ["put", "/api/budgets/2026-10/:category"],
+  ["delete", "/api/budgets/2026-10/:category"],
+  ["post", "/api/budgets/2026-10/copy-previous"],
 ];
 
 describe("sign-in protection", () => {
@@ -49,6 +53,14 @@ describe("sign-in protection", () => {
         date: new Date("2026-10-01"),
         userId: user.id,
         accountId: account.id,
+        categoryId: category.body.id,
+      },
+    });
+    await prisma.budget.create({
+      data: {
+        month: new Date("2026-10-01"),
+        amount: "100.00",
+        userId: user.id,
         categoryId: category.body.id,
       },
     });
@@ -72,12 +84,13 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources, accounts, transactions] = await Promise.all([
+  const [users, categories, sources, accounts, transactions, budgets] = await Promise.all([
     prisma.user.findMany({ orderBy: { id: "asc" } }),
     prisma.category.findMany({ orderBy: { id: "asc" } }),
     prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
     prisma.account.findMany({ orderBy: { id: "asc" } }),
     prisma.transaction.findMany({ orderBy: { id: "asc" } }),
+    prisma.budget.findMany({ orderBy: { id: "asc" } }),
   ]);
-  return { users, categories, sources, accounts, transactions };
+  return { users, categories, sources, accounts, transactions, budgets };
 }
