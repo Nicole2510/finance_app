@@ -50,3 +50,16 @@ export type Transaction = {
   category: { id: string; name: string; emoji: string | null; group: CategoryGroup } | null
   incomeSource: { id: string; name: string } | null
 }
+
+// One spending category on the Budgets page, for one month
+export type BudgetLine = {
+  id: string // the category's id
+  name: string
+  emoji: string | null
+  group: CategoryGroup
+  archived: boolean
+  budget: string | null // null when no budget is set
+  spent: string
+}
+
+export type BudgetMonth = { month: string; categories: BudgetLine[] }

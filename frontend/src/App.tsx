@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import ComingSoon from './pages/ComingSoon'
 import Settings from './pages/Settings'
+import Budgets from './pages/Budgets'
 import Categories from './pages/Categories'
 import Accounts from './pages/Accounts'
 import Transactions from './pages/Transactions'
@@ -26,7 +27,7 @@ function App() {
         <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/accounts/:id?" element={<Accounts />} />
         <Route path="/transactions" element={<Transactions />} />
-        <Route path="/budgets" element={<ComingSoon title="Budgets" />} />
+        <Route path="/budgets" element={<Budgets />} />
         <Route path="/debts" element={<ComingSoon title="Debts & Loans" />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/categories" element={<Categories />} />
