@@ -12,41 +12,42 @@ datasource db {
 
 // Stores user login info and connects their financial data
 model User {
-  id             String   @id @default(uuid())
-  clerkUserId    String   @unique
-  email          String   @unique
-  firstName      String?
-  lastName       String?
+  id          String  @id @default(uuid())
+  clerkUserId String  @unique
+  email       String  @unique
+  firstName   String?
+  lastName    String?
 
-  accounts       Account[] //user can have many accounts
-  categories     Category[] //user can have many categories
-  incomeSources  IncomeSource[] //user can have many income sources
-  transactions   Transaction[] //user can have many transactions
+  accounts      Account[] //user can have many accounts
+  categories    Category[] //user can have many categories
+  incomeSources IncomeSource[] //user can have many income sources
+  transactions  Transaction[] //user can have many transactions
+  budgets       Budget[] //user can have a budget per category per month
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 // Transaction Table
 model Transaction {
-  id        String   @id @default(uuid())
-  type      TransactionType
-  amount    Decimal  @db.Decimal(12, 2) // always positive; type gives the direction
-  date      DateTime @db.Date // calendar date only, no time/timezone
-  notes     String?
+  id     String          @id @default(uuid())
+  type   TransactionType
+  amount Decimal         @db.Decimal(12, 2) // always positive; type gives the direction
+  date   DateTime        @db.Date // calendar date only, no time/timezone
+  notes  String?
 
   // Owner of the transaction; deleting the user deletes their transactions
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   // NoAction: you can't delete an account/category that still has
   // transactions (we archive those instead)
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: NoAction)
+  account   Account @relation(fields: [accountId], references: [id], onDelete: NoAction)
   accountId String // Foreign key
 
   // Required for INCOME and EXPENSE (enforced by a CHECK in the database);
   // adjustments have none
-  category  Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction)
   categoryId String?
 
   // Who paid you (only for INCOME transactions, optional)
@@ -76,8 +77,8 @@ model Account {
   archivedAt     DateTime?
   transactions   Transaction[]
 
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -87,37 +88,56 @@ model Account {
 
 // Stores default and user-created categories used to organize transactions
 model Category {
-  id           String         @id @default(uuid())
-  name         String
-  emoji        String? // optional, stored separately from the name
-  group        CategoryGroup
-  archivedAt   DateTime? // archived categories are hidden but keep their history
+  id         String        @id @default(uuid())
+  name       String
+  emoji      String? // optional, stored separately from the name
+  group      CategoryGroup
+  archivedAt DateTime? // archived categories are hidden but keep their history
 
-  transactions  Transaction[]
+  transactions Transaction[]
+  budgets      Budget[]
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, name]) // no duplicate category names per user
 }
 
+// How much you plan to spend in one category in one month.
+// Removing a budget deletes the row, so amount is always more than 0.
+model Budget {
+  id     String   @id @default(uuid())
+  month  DateTime @db.Date // always the 1st of the month, e.g. 2026-11-01
+  amount Decimal  @db.Decimal(12, 2)
+
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, categoryId, month]) // one budget per category per month
+}
+
 // Who pays the user (e.g. each employer), separate from the income category
 model IncomeSource {
-  id           String        @id @default(uuid())
-  name         String
-  emoji        String?
-  archivedAt   DateTime?
+  id         String    @id @default(uuid())
+  name       String
+  emoji      String?
+  archivedAt DateTime?
 
   transactions Transaction[]
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, name])
 }
