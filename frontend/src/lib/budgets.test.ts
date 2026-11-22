@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { planOrder, progress, totals } from './budgets'
+import { parseBudgetInput, planOrder, progress, totals } from './budgets'
 import type { BudgetLine } from './types'
 
 const line = (
@@ -99,5 +99,24 @@ describe('planOrder', () => {
       'Gym',
       'Snacks',
     ])
+  })
+})
+
+describe('parseBudgetInput', () => {
+  it.each([
+    ['450', '450.00'],
+    ['450.5', '450.50'],
+    ['$1,200', '1200.00'],
+    [' 39.96 ', '39.96'],
+  ])('reads %j as %s', (text, amount) => {
+    expect(parseBudgetInput(text)).toEqual({ ok: true, amount })
+  })
+
+  it('treats an empty box as removing the budget', () => {
+    expect(parseBudgetInput('  ')).toEqual({ ok: true, amount: null })
+  })
+
+  it.each(['0', '0.00', '-50', 'abc', '12.345', '12345678901'])('rejects %j', (text) => {
+    expect(parseBudgetInput(text).ok).toBe(false)
   })
 })

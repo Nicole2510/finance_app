@@ -6,6 +6,7 @@ import { categoryGroups } from '../../lib/categoryGroups'
 import { formatMoney } from '../../lib/money'
 import type { BudgetLine, CategoryGroup } from '../../lib/types'
 import ProgressBar from './ProgressBar'
+import BudgetAmount from './BudgetAmount'
 
 // Bar colour per group while within budget (red once over)
 const TONE: Partial<Record<CategoryGroup, string>> = {
@@ -20,7 +21,12 @@ const num = 'px-5 py-4 text-right tabular-nums whitespace-nowrap max-[720px]:px-
 const wideOnly = 'max-[720px]:hidden'
 
 // Every category's plan for the month: tabs by group, a search, and a table
-function BudgetPlan({ lines }: { lines: BudgetLine[] }) {
+type Props = {
+  lines: BudgetLine[]
+  onSave: (categoryId: string, amount: string | null) => Promise<void>
+}
+
+function BudgetPlan({ lines, onSave }: Props) {
   const [tab, setTab] = useState(PLAN_TABS[0].id)
   const [search, setSearch] = useState('')
 
@@ -106,9 +112,15 @@ function BudgetPlan({ lines }: { lines: BudgetLine[] }) {
                     </p>
                     {/* Phones: spent of budget and the bar, under the name */}
                     <div className="mt-2 hidden max-[720px]:block">
-                      <p className="text-[13px] text-muted-foreground tabular-nums">
-                        {formatMoney(line.spent)}
-                        {line.budget !== null && ` of ${formatMoney(line.budget)}`}
+                      <p className="flex items-center text-[13px] text-muted-foreground tabular-nums">
+                        {formatMoney(line.spent)} of
+                        <BudgetAmount
+                          name={line.name}
+                          budget={line.budget}
+                          disabled={line.archived}
+                          onSave={(amount) => onSave(line.id, amount)}
+                          className="ml-0.5 px-1.5 py-0.5"
+                        />
                       </p>
                       {p && (
                         <ProgressBar
@@ -120,12 +132,15 @@ function BudgetPlan({ lines }: { lines: BudgetLine[] }) {
                       )}
                     </div>
                   </td>
-                  <td className={cn(num, wideOnly)}>
-                    {line.budget === null ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      formatMoney(line.budget)
-                    )}
+                  {/* Click to set or change; the button's padding is pulled back so
+                      the numbers still line up on the right */}
+                  <td className={cn(num, wideOnly, 'py-2.5 pr-2.5')}>
+                    <BudgetAmount
+                      name={line.name}
+                      budget={line.budget}
+                      disabled={line.archived}
+                      onSave={(amount) => onSave(line.id, amount)}
+                    />
                   </td>
                   <td className={cn(num, wideOnly)}>{formatMoney(line.spent)}</td>
                   <td className={cn(wideOnly, 'px-5 py-4')}>

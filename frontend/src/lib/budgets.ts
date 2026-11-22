@@ -65,3 +65,19 @@ export function planOrder(a: BudgetLine, b: BudgetLine) {
     a.name.localeCompare(b.name)
   )
 }
+
+// Reads a typed budget, e.g. "$1,200" or "450.5". An empty box means "no
+// budget" (amount null). Anything else that isn't a positive amount is a problem.
+export function parseBudgetInput(
+  text: string,
+): { ok: true; amount: string | null } | { ok: false; message: string } {
+  const cleaned = text.replace(/[$,\s]/g, '')
+  if (cleaned === '') return { ok: true, amount: null }
+  if (!/^\d{1,10}(\.\d{1,2})?$/.test(cleaned)) {
+    return { ok: false, message: 'Enter an amount like 450 or 450.50' }
+  }
+  if (Number(cleaned) === 0) {
+    return { ok: false, message: 'A budget must be more than $0. Clear the box to remove it.' }
+  }
+  return { ok: true, amount: Number(cleaned).toFixed(2) }
+}
