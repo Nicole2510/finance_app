@@ -289,6 +289,100 @@ describe("spending history", () => {
   });
 });
 
+describe("budget plan", () => {
+  const plan = { netPay: "1600.00", needsPct: 50, wantsPct: 30, savingsPct: 20 };
+
+  it("has no plan until one is saved", async () => {
+    const res = await alice.get("/api/budgets/2026-11/plan");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ plan: null });
+  });
+
+  it("saves a plan and shows it for that month", async () => {
+    const res = await alice.put("/api/budgets/2026-11/plan", { ...plan, netPay: "1600" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan).toEqual({ from: "2026-11", ...plan });
+    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan).toEqual({
+      from: "2026-11",
+      ...plan,
+    });
+  });
+
+  it("carries forward to later months, but not to earlier ones", async () => {
+    await alice.put("/api/budgets/2026-11/plan", plan);
+
+    expect((await alice.get("/api/budgets/2027-03/plan")).body.plan).toMatchObject({
+      from: "2026-11",
+      netPay: "1600.00",
+    });
+    expect((await alice.get("/api/budgets/2026-10/plan")).body.plan).toBeNull();
+  });
+
+  it("changing it in a later month starts a new plan and leaves earlier months alone", async () => {
+    await alice.put("/api/budgets/2026-11/plan", plan);
+
+    await alice.put("/api/budgets/2027-01/plan", {
+      netPay: "1800.00",
+      needsPct: 60,
+      wantsPct: 30,
+      savingsPct: 10,
+    });
+
+    expect((await alice.get("/api/budgets/2026-12/plan")).body.plan).toEqual({
+      from: "2026-11",
+      ...plan,
+    });
+    expect((await alice.get("/api/budgets/2027-02/plan")).body.plan).toEqual({
+      from: "2027-01",
+      netPay: "1800.00",
+      needsPct: 60,
+      wantsPct: 30,
+      savingsPct: 10,
+    });
+    expect(await prisma.budgetPlan.count()).toBe(2);
+  });
+
+  it("saving again in the same month updates that plan", async () => {
+    await alice.put("/api/budgets/2026-11/plan", plan);
+
+    await alice.put("/api/budgets/2026-11/plan", { ...plan, netPay: "1650.50" });
+
+    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("1650.50");
+    expect(await prisma.budgetPlan.count()).toBe(1);
+  });
+
+  it.each<[object, string]>([
+    [{ ...plan, needsPct: 60 }, "shares adding up to 110"],
+    [{ ...plan, needsPct: 120, wantsPct: -10, savingsPct: -10 }, "a share outside 0-100"],
+    [{ ...plan, needsPct: 49.5, wantsPct: 30.5 }, "a share with decimals"],
+    [{ ...plan, netPay: "0" }, "zero net pay"],
+    [{ ...plan, netPay: 1600 }, "net pay as a number, not a string"],
+    [{ netPay: "1600.00" }, "missing shares"],
+    [{ ...plan, userId: "someone-else" }, "an extra field"],
+  ])("rejects %o (%s)", async (body) => {
+    const res = await alice.put("/api/budgets/2026-11/plan", body);
+
+    expect(res.status).toBe(400);
+    expect(await prisma.budgetPlan.count()).toBe(0);
+  });
+
+  it("rejects a bad month", async () => {
+    expect((await alice.get("/api/budgets/2026-13/plan")).status).toBe(400);
+    expect((await alice.put("/api/budgets/2026-13/plan", plan)).status).toBe(400);
+  });
+
+  it("keeps each user's plan to themselves", async () => {
+    await alice.put("/api/budgets/2026-11/plan", plan);
+    await bob.put("/api/budgets/2026-11/plan", { ...plan, netPay: "3000.00" });
+
+    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("1600.00");
+    expect((await bob.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("3000.00");
+    expect((await as("user_carol").get("/api/budgets/2026-11/plan")).body.plan).toBeNull();
+  });
+});
+
 describe("data isolation", () => {
   it("never shows one user's budgets to another", async () => {
     const { groceries } = await setUp(alice);

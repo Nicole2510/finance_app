@@ -93,6 +93,68 @@ budgetsRouter.get("/:month/history", async (req, res) => {
   res.json({ months });
 });
 
+// ---------- Budget plan: net pay and the 50/30/20 split ----------
+// Registered before the /:month/:categoryId routes, so "plan" isn't taken as
+// a category id.
+
+const percent = z
+  .number()
+  .int("percentages must be whole numbers")
+  .min(0, "percentages can't be below 0")
+  .max(100, "percentages can't be above 100");
+
+const planSchema = z
+  .strictObject({
+    netPay: moneySchema.refine((value) => Number(value) > 0, "net pay must be above zero"),
+    needsPct: percent,
+    wantsPct: percent,
+    savingsPct: percent,
+  })
+  .refine(
+    (p) => p.needsPct + p.wantsPct + p.savingsPct === 100,
+    "Needs, wants and savings must add up to 100%",
+  );
+
+function planJson(plan: {
+  month: Date;
+  netPay: { toFixed(digits: number): string };
+  needsPct: number;
+  wantsPct: number;
+  savingsPct: number;
+}) {
+  return {
+    from: plan.month.toISOString().slice(0, 7), // the month it started
+    netPay: plan.netPay.toFixed(2),
+    needsPct: plan.needsPct,
+    wantsPct: plan.wantsPct,
+    savingsPct: plan.savingsPct,
+  };
+}
+
+// The plan a month uses: the latest one starting that month or earlier
+budgetsRouter.get("/:month/plan", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const plan = await prisma.budgetPlan.findFirst({
+    where: { userId: req.user!.id, month: { lte: monthStart(month) } },
+    orderBy: { month: "desc" },
+  });
+  res.json({ plan: plan ? planJson(plan) : null });
+});
+
+// Saves the plan from this month on. Earlier months keep their own plan.
+budgetsRouter.put("/:month/plan", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const values = parseBody(planSchema, req.body);
+  const userId = req.user!.id;
+
+  const plan = await prisma.budgetPlan.upsert({
+    where: { userId_month: { userId, month: monthStart(month) } },
+    create: { userId, month: monthStart(month), ...values },
+    update: values,
+  });
+  res.json({ plan: planJson(plan) });
+});
+
 // Sets (or changes) one category's budget for a month
 budgetsRouter.put("/:month/:categoryId", async (req, res) => {
   const month = monthParam(req.params.month);

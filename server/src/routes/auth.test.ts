@@ -34,6 +34,8 @@ const PROTECTED: [method: "get" | "post" | "put" | "patch" | "delete", path: str
   ["delete", "/api/transactions/:transaction"],
   ["get", "/api/budgets/2026-10"],
   ["get", "/api/budgets/2026-10/history"],
+  ["get", "/api/budgets/2026-10/plan"],
+  ["put", "/api/budgets/2026-10/plan"],
   ["put", "/api/budgets/2026-10/:category"],
   ["delete", "/api/budgets/2026-10/:category"],
   ["post", "/api/budgets/2026-10/copy-previous"],
@@ -65,6 +67,9 @@ describe("sign-in protection", () => {
         categoryId: category.body.id,
       },
     });
+    await prisma.budgetPlan.create({
+      data: { month: new Date("2026-10-01"), netPay: "1600.00", userId: user.id },
+    });
     const before = await snapshot();
 
     const url = path
@@ -85,13 +90,14 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources, accounts, transactions, budgets] = await Promise.all([
+  const [users, categories, sources, accounts, transactions, budgets, plans] = await Promise.all([
     prisma.user.findMany({ orderBy: { id: "asc" } }),
     prisma.category.findMany({ orderBy: { id: "asc" } }),
     prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
     prisma.account.findMany({ orderBy: { id: "asc" } }),
     prisma.transaction.findMany({ orderBy: { id: "asc" } }),
     prisma.budget.findMany({ orderBy: { id: "asc" } }),
+    prisma.budgetPlan.findMany({ orderBy: { id: "asc" } }),
   ]);
-  return { users, categories, sources, accounts, transactions, budgets };
+  return { users, categories, sources, accounts, transactions, budgets, plans };
 }

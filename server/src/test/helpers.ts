@@ -5,6 +5,7 @@ import { prisma } from "../db.js";
 // Empties every table in luma_test (children before parents)
 export async function resetDb() {
   await prisma.budget.deleteMany();
+  await prisma.budgetPlan.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.account.deleteMany();
   await prisma.category.deleteMany();
