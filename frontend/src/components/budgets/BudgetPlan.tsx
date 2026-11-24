@@ -4,16 +4,9 @@ import { cn } from '@/lib/utils'
 import { PLAN_TABS, planOrder, progress } from '../../lib/budgets'
 import { categoryGroups } from '../../lib/categoryGroups'
 import { formatMoney } from '../../lib/money'
-import type { BudgetLine, CategoryGroup } from '../../lib/types'
+import type { BudgetLine } from '../../lib/types'
 import ProgressBar from './ProgressBar'
 import BudgetAmount from './BudgetAmount'
-
-// Bar colour per group while within budget (red once over)
-const TONE: Partial<Record<CategoryGroup, string>> = {
-  NEEDS: 'bg-primary',
-  WANTS: 'bg-[#a8457a]',
-}
-const toneOf = (group: CategoryGroup) => TONE[group] ?? 'bg-[#3f78b5]'
 
 // Money cells line up on the right; phones hide the detail columns and show a
 // compact summary under the category name instead
@@ -122,14 +115,7 @@ function BudgetPlan({ lines, onSave }: Props) {
                           className="ml-0.5 px-1.5 py-0.5"
                         />
                       </p>
-                      {p && (
-                        <ProgressBar
-                          percent={p.bar}
-                          over={p.over}
-                          tone={toneOf(line.group)}
-                          className="mt-1.5"
-                        />
-                      )}
+                      {p && <ProgressBar percent={p.bar} over={p.over} className="mt-1.5" />}
                     </div>
                   </td>
                   {/* Click to set or change; the button's padding is pulled back so
@@ -149,7 +135,6 @@ function BudgetPlan({ lines, onSave }: Props) {
                         <ProgressBar
                           percent={p.bar}
                           over={p.over}
-                          tone={toneOf(line.group)}
                           className="w-40 shrink-0 max-[1000px]:w-24"
                         />
                         <span

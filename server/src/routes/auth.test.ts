@@ -33,6 +33,7 @@ const PROTECTED: [method: "get" | "post" | "put" | "patch" | "delete", path: str
   ["patch", "/api/transactions/:transaction"],
   ["delete", "/api/transactions/:transaction"],
   ["get", "/api/budgets/2026-10"],
+  ["get", "/api/budgets/2026-10/history"],
   ["put", "/api/budgets/2026-10/:category"],
   ["delete", "/api/budgets/2026-10/:category"],
   ["post", "/api/budgets/2026-10/copy-previous"],

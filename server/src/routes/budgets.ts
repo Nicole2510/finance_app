@@ -4,7 +4,7 @@ import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
 import { moneySchema, parseBody } from "../lib/validation.js";
-import { monthRange, monthSchema, monthStart, previousMonth } from "../lib/months.js";
+import { lastMonths, monthRange, monthSchema, monthStart, previousMonth } from "../lib/months.js";
 
 // Monthly budgets: a planned amount per spending category per month
 export const budgetsRouter = Router();
@@ -72,6 +72,25 @@ budgetsRouter.get("/:month", async (req, res) => {
       }))
       .filter((c) => !c.archived || c.budget !== null || c.spent !== "0.00"),
   });
+});
+
+// Total spending for each of the 6 months up to and including this one, for
+// the spending chart. Only expenses count (not income or adjustments).
+budgetsRouter.get("/:month/history", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const userId = req.user!.id;
+
+  const months = await Promise.all(
+    lastMonths(month, 6).map(async (m) => {
+      const { _sum } = await prisma.transaction.aggregate({
+        where: { userId, type: "EXPENSE", date: monthRange(m) },
+        _sum: { amount: true },
+      });
+      return { month: m, spent: _sum.amount?.toFixed(2) ?? "0.00" };
+    }),
+  );
+
+  res.json({ months });
 });
 
 // Sets (or changes) one category's budget for a month

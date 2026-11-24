@@ -242,6 +242,53 @@ describe("copying last month", () => {
   });
 });
 
+describe("spending history", () => {
+  it("totals each of the last 6 months, oldest first, including empty months", async () => {
+    const { account, groceries, rent } = await setUp(alice);
+    await spend(alice, account.id, groceries, "0.10", "2026-11-02");
+    await spend(alice, account.id, rent, "0.20", "2026-11-28");
+    await spend(alice, account.id, groceries, "45.00", "2026-09-15");
+
+    const res = await alice.get("/api/budgets/2026-11/history");
+
+    expect(res.status).toBe(200);
+    expect(res.body.months).toEqual([
+      { month: "2026-06", spent: "0.00" },
+      { month: "2026-07", spent: "0.00" },
+      { month: "2026-08", spent: "0.00" },
+      { month: "2026-09", spent: "45.00" },
+      { month: "2026-10", spent: "0.00" },
+      { month: "2026-11", spent: "0.30" },
+    ]);
+  });
+
+  it("crosses into last year and ignores income, later months and other users", async () => {
+    const { account, groceries, salary } = await setUp(alice);
+    const bobs = await setUp(bob);
+    await spend(alice, account.id, groceries, "20.00", "2025-12-31");
+    await spend(alice, account.id, salary, "900.00", "2026-01-05", "INCOME");
+    await spend(alice, account.id, groceries, "99.00", "2026-03-01"); // after the range
+    await spend(bob, bobs.account.id, bobs.groceries, "70.00", "2026-01-05");
+
+    const { body } = await alice.get("/api/budgets/2026-02/history");
+
+    expect(body.months.map((m: { month: string }) => m.month)).toEqual([
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+    ]);
+    expect(body.months.find((m: { month: string }) => m.month === "2025-12").spent).toBe("20.00");
+    expect(body.months.find((m: { month: string }) => m.month === "2026-01").spent).toBe("0.00");
+  });
+
+  it("rejects a bad month", async () => {
+    expect((await alice.get("/api/budgets/2026-13/history")).status).toBe(400);
+  });
+});
+
 describe("data isolation", () => {
   it("never shows one user's budgets to another", async () => {
     const { groceries } = await setUp(alice);

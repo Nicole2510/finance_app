@@ -25,3 +25,11 @@ export function previousMonth(month: string) {
   const date = new Date(Date.UTC(year, monthNumber - 2, 1));
   return date.toISOString().slice(0, 7);
 }
+
+// The given month and the ones before it, oldest first:
+// lastMonths("2026-02", 3) → ["2025-12", "2026-01", "2026-02"]
+export function lastMonths(month: string, count: number) {
+  const months = [month];
+  while (months.length < count) months.unshift(previousMonth(months[0]));
+  return months;
+}
