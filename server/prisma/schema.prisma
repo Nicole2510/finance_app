@@ -23,6 +23,7 @@ model User {
   incomeSources IncomeSource[] //user can have many income sources
   transactions  Transaction[] //user can have many transactions
   budgets       Budget[] //user can have a budget per category per month
+  budgetPlans   BudgetPlan[] //net pay and 50/30/20 split, from a month on
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,4 +168,24 @@ enum CategoryGroup {
   DEBT
   INVESTMENTS
   INCOME
+}
+
+// Net pay and the 50/30/20 split, starting from a month. A month uses the
+// latest plan from that month or earlier, so a plan carries forward until
+// it's changed (and changing it never alters earlier months).
+model BudgetPlan {
+  id         String   @id @default(uuid())
+  month      DateTime @db.Date // the month it starts from, always the 1st
+  netPay     Decimal  @db.Decimal(12, 2) // monthly take-home pay
+  needsPct   Int      @default(50)
+  wantsPct   Int      @default(30)
+  savingsPct Int      @default(20) // Savings, Debt and Investments together
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, month]) // one plan per starting month
 }
