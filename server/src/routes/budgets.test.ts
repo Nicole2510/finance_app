@@ -289,6 +289,104 @@ describe("spending history", () => {
   });
 });
 
+describe("income for the month", () => {
+  // An income source with one pay schedule
+  async function paidBy(user: ReturnType<typeof as>, name: string, schedule: object) {
+    const { body } = await user.post("/api/income-sources", { name });
+    const res = await user.post(`/api/income-sources/${body.id}/schedules`, schedule);
+    expect(res.status).toBe(201);
+    return body.id as string;
+  }
+
+  const biweekly = { startsOn: "2026-01-02", amount: "800.00", frequency: "WEEKS", interval: 2 };
+
+  it("has no income before any schedules or income", async () => {
+    await setUp(alice);
+
+    const { body } = await alice.get("/api/budgets/2026-01");
+
+    expect(body.income).toEqual({ expected: "0.00", received: "0.00", paydays: [] });
+  });
+
+  it("expects every payday in the month, including a 3-paycheque month", async () => {
+    await setUp(alice);
+    await paidBy(alice, "Acme", biweekly);
+
+    const january = (await alice.get("/api/budgets/2026-01")).body.income;
+    const february = (await alice.get("/api/budgets/2026-02")).body.income;
+
+    expect(january.expected).toBe("2400.00");
+    expect(january.paydays).toEqual([
+      { date: "2026-01-02", amount: "800.00", source: "Acme" },
+      { date: "2026-01-16", amount: "800.00", source: "Acme" },
+      { date: "2026-01-30", amount: "800.00", source: "Acme" },
+    ]);
+    expect(february.expected).toBe("1600.00");
+  });
+
+  it("adds up several income sources, each with its own schedules", async () => {
+    await setUp(alice);
+    const acme = await paidBy(alice, "Acme", biweekly);
+    // A raise at Acme from Feb 13, and a side job paid monthly
+    await alice.post(`/api/income-sources/${acme}/schedules`, {
+      ...biweekly,
+      startsOn: "2026-02-13",
+      amount: "850.00",
+    });
+    await paidBy(alice, "Side job", {
+      startsOn: "2026-01-20",
+      amount: "120.50",
+      frequency: "MONTHS",
+      interval: 1,
+    });
+
+    const { body } = await alice.get("/api/budgets/2026-02");
+
+    expect(body.income.expected).toBe("1820.50"); // 850 + 120.50 + 850
+    expect(body.income.paydays.map((p: { source: string }) => p.source)).toEqual([
+      "Acme",
+      "Side job",
+      "Acme",
+    ]);
+  });
+
+  it("counts received income from income transactions, separately from expected", async () => {
+    const { account, salary, groceries } = await setUp(alice);
+    await paidBy(alice, "Acme", biweekly);
+    await spend(alice, account.id, salary, "800.00", "2026-02-13", "INCOME");
+    await spend(alice, account.id, salary, "0.10", "2026-02-20", "INCOME");
+    await spend(alice, account.id, salary, "0.20", "2026-02-27", "INCOME");
+    await spend(alice, account.id, groceries, "50.00", "2026-02-14"); // spending isn't income
+    await spend(alice, account.id, salary, "900.00", "2026-03-13", "INCOME"); // next month
+
+    const { body } = await alice.get("/api/budgets/2026-02");
+
+    expect(body.income.received).toBe("800.30");
+    expect(body.income.expected).toBe("1600.00"); // unchanged by what was received
+  });
+
+  it("is fine when more is received than expected", async () => {
+    const { account, salary } = await setUp(alice);
+    await paidBy(alice, "Acme", biweekly);
+    await spend(alice, account.id, salary, "1900.00", "2026-02-13", "INCOME");
+
+    const { body } = await alice.get("/api/budgets/2026-02");
+
+    expect(body.income).toMatchObject({ expected: "1600.00", received: "1900.00" });
+  });
+
+  it("only counts your own schedules and income", async () => {
+    await setUp(alice);
+    const bobs = await setUp(bob);
+    await paidBy(bob, "Bob's work", biweekly);
+    await spend(bob, bobs.account.id, bobs.salary, "800.00", "2026-02-13", "INCOME");
+
+    const { body } = await alice.get("/api/budgets/2026-02");
+
+    expect(body.income).toEqual({ expected: "0.00", received: "0.00", paydays: [] });
+  });
+});
+
 describe("budget plan", () => {
   const plan = { needsPct: 50, wantsPct: 30, savingsPct: 20 };
 

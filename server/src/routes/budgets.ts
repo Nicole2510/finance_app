@@ -5,6 +5,8 @@ import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
 import { moneySchema, parseBody } from "../lib/validation.js";
 import { lastMonths, monthRange, monthSchema, monthStart, previousMonth } from "../lib/months.js";
+import { paydaysIn } from "../lib/paydays.js";
+import { sumMoney } from "../lib/money.js";
 
 // Monthly budgets: a planned amount per spending category per month
 export const budgetsRouter = Router();
@@ -36,13 +38,47 @@ async function budgetableCategory(userId: string, categoryId: unknown) {
   return category;
 }
 
+// The month's income, as two separate figures that never change each other:
+// expected (the paydays in the user's pay schedules) and received (income
+// transactions actually recorded)
+async function incomeFor(userId: string, month: string) {
+  const [schedules, received] = await Promise.all([
+    prisma.paySchedule.findMany({
+      where: { userId },
+      include: { incomeSource: { select: { name: true } } },
+    }),
+    prisma.transaction.aggregate({
+      where: { userId, type: "INCOME", date: monthRange(month) },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  // Each source's schedules decide its paydays together (a later one takes over)
+  const bySource = Map.groupBy(schedules, (s) => s.incomeSourceId);
+  const paydays = [...bySource.values()]
+    .flatMap((group) =>
+      paydaysIn(
+        group.map((s) => ({ ...s, amount: s.amount.toFixed(2) })),
+        month,
+      ).map((p) => ({ ...p, source: group[0].incomeSource.name })),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date) || a.source.localeCompare(b.source));
+
+  return {
+    expected: sumMoney(paydays.map((p) => p.amount)),
+    received: received._sum.amount?.toFixed(2) ?? "0.00",
+    paydays,
+  };
+}
+
 // Every spending category for a month, with its budget (or null) and what was
 // spent. Archived categories only appear if they have a budget or spending.
+// Also the month's expected and received income.
 budgetsRouter.get("/:month", async (req, res) => {
   const month = monthParam(req.params.month);
   const userId = req.user!.id;
 
-  const [categories, budgets, spending] = await Promise.all([
+  const [categories, budgets, spending, income] = await Promise.all([
     prisma.category.findMany({
       where: { userId, group: { not: "INCOME" } },
       orderBy: { name: "asc" },
@@ -53,6 +89,7 @@ budgetsRouter.get("/:month", async (req, res) => {
       where: { userId, type: "EXPENSE", date: monthRange(month) },
       _sum: { amount: true },
     }),
+    incomeFor(userId, month),
   ]);
 
   const budgetOf = new Map(budgets.map((b) => [b.categoryId, b.amount]));
@@ -71,6 +108,7 @@ budgetsRouter.get("/:month", async (req, res) => {
         spent: spentOf.get(c.id)?.toFixed(2) ?? "0.00",
       }))
       .filter((c) => !c.archived || c.budget !== null || c.spent !== "0.00"),
+    income,
   });
 });
 
