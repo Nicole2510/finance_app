@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Wallet } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
-import type { Category, CategoryGroup, IncomeSource } from '../lib/types'
+import type { Category, CategoryGroup, IncomeSource, PaySchedule } from '../lib/types'
+import { currentSchedule, describeSchedule } from '../lib/paySchedules'
+import { today } from '../lib/dates'
+import PayScheduleModal from '../components/income/PayScheduleModal'
 import Modal from '../components/Modal'
 import ItemRow from '../components/ItemRow'
 import ItemFormModal, { type ItemKind, type ItemValues } from '../components/ItemFormModal'
@@ -94,6 +97,7 @@ type Popup =
   | { type: 'choose' }
   | { type: 'form'; kind: ItemKind; item?: Item; group?: CategoryGroup }
   | { type: 'delete'; kind: ItemKind; item: Item }
+  | { type: 'schedule'; source: IncomeSource }
 
 function kindOf(item: Item): ItemKind {
   if (!('group' in item)) return 'source'
@@ -109,6 +113,9 @@ function Categories() {
   const [openTile, setOpenTile] = useState<TileId | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [popup, setPopup] = useState<Popup | null>(null)
+  // Each income source's current pay, e.g. "$800.00 every 2 weeks", shown under its name
+  const [payOf, setPayOf] = useState<Record<string, string>>({})
+  const [scheduleVersion, setScheduleVersion] = useState(0)
 
   useEffect(() => {
     Promise.all([
@@ -121,6 +128,25 @@ function Categories() {
       })
       .catch((err: Error) => setLoadError(err.message))
   }, [apiFetch])
+
+  useEffect(() => {
+    if (!sources) return
+    let stale = false
+    Promise.all(
+      sources.map((s) =>
+        apiFetch<PaySchedule[]>(`/api/income-sources/${s.id}/schedules`).then((list) => {
+          const paying = currentSchedule(list, today())
+          const text = paying ? describeSchedule(paying) : list.length > 0 ? 'Pay has ended' : ''
+          return [s.id, text] as const
+        }),
+      ),
+    )
+      .then((entries) => !stale && setPayOf(Object.fromEntries(entries)))
+      .catch(() => {}) // only a summary; the page works without it
+    return () => {
+      stale = true
+    }
+  }, [apiFetch, sources, scheduleVersion])
 
   if (!categories || !sources) {
     return loadError ? <FormError>{loadError}</FormError> : <p>Loading...</p>
@@ -194,6 +220,17 @@ function Categories() {
         onEdit={() => setPopup({ type: 'form', kind, item })}
         onToggleArchive={() => setArchived(kind, item, item.archivedAt === null)}
         onDelete={() => setPopup({ type: 'delete', kind, item })}
+        {...(kind === 'source' && {
+          subtitle: payOf[item.id] || undefined,
+          extraActions: [
+            {
+              label: 'Pay schedule',
+              hint: 'What it pays and when',
+              icon: Wallet,
+              onSelect: () => setPopup({ type: 'schedule', source: item as IncomeSource }),
+            },
+          ],
+        })}
       />
     )
   }
@@ -337,6 +374,14 @@ function Categories() {
           isEditing={popup.item !== undefined}
           onClose={() => setPopup(null)}
           onSubmit={(values) => save(popup.kind, values, popup.item)}
+        />
+      )}
+
+      {popup?.type === 'schedule' && (
+        <PayScheduleModal
+          source={popup.source}
+          onClose={() => setPopup(null)}
+          onChanged={() => setScheduleVersion((v) => v + 1)}
         />
       )}
 

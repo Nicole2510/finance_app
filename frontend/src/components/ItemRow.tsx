@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import ActionsMenu from './ActionsMenu'
+import ActionsMenu, { type MenuAction } from './ActionsMenu'
 
 type Item = { id: string; name: string; emoji: string | null; archivedAt: string | null }
 
@@ -8,10 +8,12 @@ type Props = {
   onEdit: () => void
   onToggleArchive: () => void
   onDelete: () => void
+  subtitle?: string // a short line under the name, e.g. an income source's pay
+  extraActions?: MenuAction[] // shown first in the ⋯ menu
 }
 
 // One category or income source in a group popup, with a ⋯ actions menu
-function ItemRow({ item, onEdit, onToggleArchive, onDelete }: Props) {
+function ItemRow({ item, onEdit, onToggleArchive, onDelete, subtitle, extraActions = [] }: Props) {
   const archived = item.archivedAt !== null
 
   return (
@@ -27,11 +29,17 @@ function ItemRow({ item, onEdit, onToggleArchive, onDelete }: Props) {
       >
         {item.emoji ?? '·'}
       </span>
-      <span className="min-w-0 flex-1 truncate">{item.name}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{item.name}</span>
+        {subtitle && (
+          <span className="block truncate text-sm text-muted-foreground">{subtitle}</span>
+        )}
+      </span>
 
       <ActionsMenu
         label={`Actions for ${item.name}`}
         actions={[
+          ...extraActions,
           { label: 'Edit', onSelect: onEdit },
           { label: archived ? 'Restore' : 'Archive', onSelect: onToggleArchive },
           { label: 'Delete', danger: true, onSelect: onDelete },

@@ -63,3 +63,27 @@ export type BudgetLine = {
 }
 
 export type BudgetMonth = { month: string; categories: BudgetLine[] }
+
+// Net pay and the 50/30/20 split a month uses (from the month it started)
+export type BudgetPlan = {
+  from: string // e.g. "2026-11"
+  netPay: string
+  needsPct: number
+  wantsPct: number
+  savingsPct: number
+}
+
+// How often a pay schedule pays (see PayFrequency on the server)
+export type PayFrequency = 'WEEKS' | 'MONTHS' | 'TWICE_A_MONTH'
+
+// What an income source pays and when, from its first payday on
+export type PaySchedule = {
+  id: string
+  startsOn: string // first payday, "YYYY-MM-DD"
+  endsOn: string | null // last payday, if it has ended
+  amount: string // per paycheque
+  frequency: PayFrequency
+  interval: number | null // every N weeks or months
+  dayOne: number | null // twice a month only
+  dayTwo: number | null // twice a month only (31 = last day)
+}
