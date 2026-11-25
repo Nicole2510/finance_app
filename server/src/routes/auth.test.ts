@@ -21,6 +21,10 @@ const PROTECTED: [method: "get" | "post" | "put" | "patch" | "delete", path: str
   ["post", "/api/income-sources"],
   ["patch", "/api/income-sources/:source"],
   ["delete", "/api/income-sources/:source"],
+  ["get", "/api/income-sources/:source/schedules"],
+  ["post", "/api/income-sources/:source/schedules"],
+  ["patch", "/api/income-sources/:source/schedules/:schedule"],
+  ["delete", "/api/income-sources/:source/schedules/:schedule"],
   ["get", "/api/accounts"],
   ["post", "/api/accounts"],
   ["patch", "/api/accounts/:account"],
@@ -67,6 +71,16 @@ describe("sign-in protection", () => {
         categoryId: category.body.id,
       },
     });
+    const schedule = await prisma.paySchedule.create({
+      data: {
+        startsOn: new Date("2026-10-02"),
+        amount: "800.00",
+        frequency: "WEEKS",
+        interval: 2,
+        incomeSourceId: source.body.id,
+        userId: user.id,
+      },
+    });
     await prisma.budgetPlan.create({
       data: { month: new Date("2026-10-01"), userId: user.id },
     });
@@ -74,6 +88,7 @@ describe("sign-in protection", () => {
 
     const url = path
       .replace(":category", category.body.id)
+      .replace(":schedule", schedule.id)
       .replace(":source", source.body.id)
       .replace(":account", account.id)
       .replace(":transaction", transaction.id);
@@ -90,14 +105,16 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources, accounts, transactions, budgets, plans] = await Promise.all([
-    prisma.user.findMany({ orderBy: { id: "asc" } }),
-    prisma.category.findMany({ orderBy: { id: "asc" } }),
-    prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
-    prisma.account.findMany({ orderBy: { id: "asc" } }),
-    prisma.transaction.findMany({ orderBy: { id: "asc" } }),
-    prisma.budget.findMany({ orderBy: { id: "asc" } }),
-    prisma.budgetPlan.findMany({ orderBy: { id: "asc" } }),
-  ]);
-  return { users, categories, sources, accounts, transactions, budgets, plans };
+  const [users, categories, sources, accounts, transactions, budgets, plans, schedules] =
+    await Promise.all([
+      prisma.user.findMany({ orderBy: { id: "asc" } }),
+      prisma.category.findMany({ orderBy: { id: "asc" } }),
+      prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
+      prisma.account.findMany({ orderBy: { id: "asc" } }),
+      prisma.transaction.findMany({ orderBy: { id: "asc" } }),
+      prisma.budget.findMany({ orderBy: { id: "asc" } }),
+      prisma.budgetPlan.findMany({ orderBy: { id: "asc" } }),
+      prisma.paySchedule.findMany({ orderBy: { id: "asc" } }),
+    ]);
+  return { users, categories, sources, accounts, transactions, budgets, plans, schedules };
 }

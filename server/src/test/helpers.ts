@@ -6,6 +6,7 @@ import { prisma } from "../db.js";
 export async function resetDb() {
   await prisma.budget.deleteMany();
   await prisma.budgetPlan.deleteMany();
+  await prisma.paySchedule.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.account.deleteMany();
   await prisma.category.deleteMany();
