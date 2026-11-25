@@ -68,7 +68,7 @@ describe("sign-in protection", () => {
       },
     });
     await prisma.budgetPlan.create({
-      data: { month: new Date("2026-10-01"), netPay: "1600.00", userId: user.id },
+      data: { month: new Date("2026-10-01"), userId: user.id },
     });
     const before = await snapshot();
 

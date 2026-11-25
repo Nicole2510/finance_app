@@ -23,7 +23,8 @@ model User {
   incomeSources IncomeSource[] //user can have many income sources
   transactions  Transaction[] //user can have many transactions
   budgets       Budget[] //user can have a budget per category per month
-  budgetPlans   BudgetPlan[] //net pay and 50/30/20 split, from a month on
+  budgetPlans   BudgetPlan[] //50/30/20 split, from a month on
+  paySchedules  PaySchedule[] //when and how much each income source pays
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,6 +134,7 @@ model IncomeSource {
   archivedAt DateTime?
 
   transactions Transaction[]
+  paySchedules PaySchedule[]
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
@@ -170,13 +172,13 @@ enum CategoryGroup {
   INCOME
 }
 
-// Net pay and the 50/30/20 split, starting from a month. A month uses the
-// latest plan from that month or earlier, so a plan carries forward until
-// it's changed (and changing it never alters earlier months).
+// The 50/30/20 split, starting from a month. A month uses the latest plan
+// from that month or earlier, so a plan carries forward until it's changed
+// (and changing it never alters earlier months). The money it splits is the
+// month's expected income, from pay schedules.
 model BudgetPlan {
   id         String   @id @default(uuid())
   month      DateTime @db.Date // the month it starts from, always the 1st
-  netPay     Decimal  @db.Decimal(12, 2) // monthly take-home pay
   needsPct   Int      @default(50)
   wantsPct   Int      @default(30)
   savingsPct Int      @default(20) // Savings, Debt and Investments together
@@ -188,4 +190,36 @@ model BudgetPlan {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, month]) // one plan per starting month
+}
+
+// How often a pay schedule pays
+enum PayFrequency {
+  WEEKS // every `interval` weeks, e.g. 2 = every two weeks
+  MONTHS // every `interval` months, on the first payday's day
+  TWICE_A_MONTH // on dayOne and dayTwo each month
+}
+
+// What an income source pays and when, from its first payday on. A payday
+// uses the latest schedule that started on or before it, unless that one has
+// ended, so a raise or a new frequency mid-month is counted exactly and past
+// paydays never change. Expected income for a month = the paydays in it.
+model PaySchedule {
+  id        String       @id @default(uuid())
+  startsOn  DateTime     @db.Date // first payday at this amount
+  endsOn    DateTime?    @db.Date // last payday, e.g. when leaving a job
+  amount    Decimal      @db.Decimal(12, 2) // per paycheque
+  frequency PayFrequency
+  interval  Int? // weeks (1-52) or months (1-12); empty for twice a month
+  dayOne    Int? // twice a month only, e.g. 1
+  dayTwo    Int? // twice a month only, e.g. 15 (31 = last day of the month)
+
+  incomeSource   IncomeSource @relation(fields: [incomeSourceId], references: [id], onDelete: Cascade)
+  incomeSourceId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([incomeSourceId, startsOn]) // one schedule per start date per source
 }

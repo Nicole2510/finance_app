@@ -290,7 +290,7 @@ describe("spending history", () => {
 });
 
 describe("budget plan", () => {
-  const plan = { netPay: "1600.00", needsPct: 50, wantsPct: 30, savingsPct: 20 };
+  const plan = { needsPct: 50, wantsPct: 30, savingsPct: 20 };
 
   it("has no plan until one is saved", async () => {
     const res = await alice.get("/api/budgets/2026-11/plan");
@@ -300,7 +300,7 @@ describe("budget plan", () => {
   });
 
   it("saves a plan and shows it for that month", async () => {
-    const res = await alice.put("/api/budgets/2026-11/plan", { ...plan, netPay: "1600" });
+    const res = await alice.put("/api/budgets/2026-11/plan", plan);
 
     expect(res.status).toBe(200);
     expect(res.body.plan).toEqual({ from: "2026-11", ...plan });
@@ -315,7 +315,7 @@ describe("budget plan", () => {
 
     expect((await alice.get("/api/budgets/2027-03/plan")).body.plan).toMatchObject({
       from: "2026-11",
-      netPay: "1600.00",
+      needsPct: 50,
     });
     expect((await alice.get("/api/budgets/2026-10/plan")).body.plan).toBeNull();
   });
@@ -324,7 +324,6 @@ describe("budget plan", () => {
     await alice.put("/api/budgets/2026-11/plan", plan);
 
     await alice.put("/api/budgets/2027-01/plan", {
-      netPay: "1800.00",
       needsPct: 60,
       wantsPct: 30,
       savingsPct: 10,
@@ -336,7 +335,6 @@ describe("budget plan", () => {
     });
     expect((await alice.get("/api/budgets/2027-02/plan")).body.plan).toEqual({
       from: "2027-01",
-      netPay: "1800.00",
       needsPct: 60,
       wantsPct: 30,
       savingsPct: 10,
@@ -347,9 +345,9 @@ describe("budget plan", () => {
   it("saving again in the same month updates that plan", async () => {
     await alice.put("/api/budgets/2026-11/plan", plan);
 
-    await alice.put("/api/budgets/2026-11/plan", { ...plan, netPay: "1650.50" });
+    await alice.put("/api/budgets/2026-11/plan", { needsPct: 40, wantsPct: 30, savingsPct: 30 });
 
-    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("1650.50");
+    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.needsPct).toBe(40);
     expect(await prisma.budgetPlan.count()).toBe(1);
   });
 
@@ -357,9 +355,9 @@ describe("budget plan", () => {
     [{ ...plan, needsPct: 60 }, "shares adding up to 110"],
     [{ ...plan, needsPct: 120, wantsPct: -10, savingsPct: -10 }, "a share outside 0-100"],
     [{ ...plan, needsPct: 49.5, wantsPct: 30.5 }, "a share with decimals"],
-    [{ ...plan, netPay: "0" }, "zero net pay"],
-    [{ ...plan, netPay: 1600 }, "net pay as a number, not a string"],
-    [{ netPay: "1600.00" }, "missing shares"],
+    [{ ...plan, needsPct: "50" }, "a share as a string, not a number"],
+    [{ needsPct: 50 }, "missing shares"],
+    [{ ...plan, netPay: "1600.00" }, "net pay, which now comes from pay schedules"],
     [{ ...plan, userId: "someone-else" }, "an extra field"],
   ])("rejects %o (%s)", async (body) => {
     const res = await alice.put("/api/budgets/2026-11/plan", body);
@@ -375,10 +373,10 @@ describe("budget plan", () => {
 
   it("keeps each user's plan to themselves", async () => {
     await alice.put("/api/budgets/2026-11/plan", plan);
-    await bob.put("/api/budgets/2026-11/plan", { ...plan, netPay: "3000.00" });
+    await bob.put("/api/budgets/2026-11/plan", { needsPct: 60, wantsPct: 30, savingsPct: 10 });
 
-    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("1600.00");
-    expect((await bob.get("/api/budgets/2026-11/plan")).body.plan.netPay).toBe("3000.00");
+    expect((await alice.get("/api/budgets/2026-11/plan")).body.plan.needsPct).toBe(50);
+    expect((await bob.get("/api/budgets/2026-11/plan")).body.plan.needsPct).toBe(60);
     expect((await as("user_carol").get("/api/budgets/2026-11/plan")).body.plan).toBeNull();
   });
 });

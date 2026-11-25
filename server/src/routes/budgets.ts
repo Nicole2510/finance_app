@@ -93,7 +93,7 @@ budgetsRouter.get("/:month/history", async (req, res) => {
   res.json({ months });
 });
 
-// ---------- Budget plan: net pay and the 50/30/20 split ----------
+// ---------- Budget plan: the 50/30/20 split of expected income ----------
 // Registered before the /:month/:categoryId routes, so "plan" isn't taken as
 // a category id.
 
@@ -105,7 +105,6 @@ const percent = z
 
 const planSchema = z
   .strictObject({
-    netPay: moneySchema.refine((value) => Number(value) > 0, "net pay must be above zero"),
     needsPct: percent,
     wantsPct: percent,
     savingsPct: percent,
@@ -115,16 +114,9 @@ const planSchema = z
     "Needs, wants and savings must add up to 100%",
   );
 
-function planJson(plan: {
-  month: Date;
-  netPay: { toFixed(digits: number): string };
-  needsPct: number;
-  wantsPct: number;
-  savingsPct: number;
-}) {
+function planJson(plan: { month: Date; needsPct: number; wantsPct: number; savingsPct: number }) {
   return {
     from: plan.month.toISOString().slice(0, 7), // the month it started
-    netPay: plan.netPay.toFixed(2),
     needsPct: plan.needsPct,
     wantsPct: plan.wantsPct,
     savingsPct: plan.savingsPct,
