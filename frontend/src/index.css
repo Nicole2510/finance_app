@@ -106,6 +106,14 @@
     max-width: 100%;
     display: block;
   }
+
+  /* Tailwind 4 gives buttons the plain arrow cursor; show the pointing hand on
+     anything clickable, but not while it's disabled */
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
 }
 
 /* Thin, rounded scrollbars in our palette instead of the browser's default.

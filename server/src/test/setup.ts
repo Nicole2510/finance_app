@@ -3,8 +3,7 @@ import { vi } from "vitest";
 // Fake Clerk for tests: no network calls and no real keys needed.
 // A test "signs in" by sending the header  x-test-clerk-user: <clerk id>
 vi.mock("@clerk/express", () => ({
-  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) =>
-    next(),
+  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 
   getAuth: (req: { headers: Record<string, string | undefined> }) => ({
     userId: req.headers["x-test-clerk-user"] ?? null,
@@ -19,6 +18,8 @@ vi.mock("@clerk/express", () => ({
         primaryEmailAddress: { emailAddress: `${id}@example.com` },
         emailAddresses: [{ emailAddress: `${id}@example.com` }],
       }),
+      // Tests can check it was called, or make it fail (vi.mocked(...).mockRejectedValueOnce)
+      deleteUser: vi.fn(async (id: string) => ({ id, deleted: true })),
     },
   },
 }));

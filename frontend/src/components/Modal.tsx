@@ -3,18 +3,20 @@ import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PortalContainer } from '../lib/portalContainer'
 
-type Variant = 'dialog' | 'wide' | 'large'
+type Variant = 'compact' | 'dialog' | 'wide' | 'large'
 
 type Props = {
   title?: string
   badge?: ReactNode // small label under the title, e.g. "Expense"
   onClose: () => void
-  // All are centred: "dialog" for forms, "wide" for longer lists, "large" for tables
+  // All are centred: "compact" for short questions, "dialog" for forms, "wide" for
+  // longer lists, "large" for tables
   variant?: Variant
   children: ReactNode
 }
 
 const WIDTHS: Record<Variant, string> = {
+  compact: 'w-[min(380px,calc(100vw-32px))]',
   dialog: 'w-[min(460px,calc(100vw-32px))]',
   wide: 'w-[min(560px,calc(100vw-32px))]',
   large: 'w-[min(880px,calc(100vw-32px))]',
