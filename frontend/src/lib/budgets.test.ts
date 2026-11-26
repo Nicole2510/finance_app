@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseBudgetInput, planOrder, progress, totals } from './budgets'
+import { breakdown, parseBudgetInput, planOrder, progress, totals, unallocated } from './budgets'
 import type { BudgetLine } from './types'
 
 const line = (
@@ -118,5 +118,89 @@ describe('parseBudgetInput', () => {
 
   it.each(['0', '0.00', '-50', 'abc', '12.345', '12345678901'])('rejects %j', (text) => {
     expect(parseBudgetInput(text).ok).toBe(false)
+  })
+})
+
+const split = { needsPct: 50, wantsPct: 30, savingsPct: 20 }
+
+describe('unallocated', () => {
+  it('is expected income minus everything budgeted', () => {
+    expect(
+      unallocated('1600.00', [line('1200.00', '0.00'), line('380.48', '0.00'), line(null, '9.00')]),
+    ).toBe('19.52')
+  })
+
+  it('goes negative when more is budgeted than expected', () => {
+    expect(unallocated('1600.00', [line('1700.00', '0.00')])).toBe('-100.00')
+  })
+
+  it('is zero minus the budgets when no income is expected', () => {
+    expect(unallocated('0.00', [line('300.00', '0.00')])).toBe('-300.00')
+  })
+})
+
+describe('breakdown', () => {
+  it('splits expected income into targets and compares what is planned in each', () => {
+    const lines = [
+      line('1535.21', '0.00', { group: 'NEEDS' }),
+      line('45.27', '0.00', { group: 'WANTS' }),
+      line(null, '20.00', { group: 'SAVINGS' }),
+    ]
+    expect(breakdown(split, '1600.00', lines)).toEqual([
+      {
+        id: 'needs',
+        label: 'Needs',
+        percent: 50,
+        target: '800.00',
+        planned: '1535.21',
+        over: true,
+        difference: '735.21',
+        bar: 100,
+      },
+      {
+        id: 'wants',
+        label: 'Wants',
+        percent: 30,
+        target: '480.00',
+        planned: '45.27',
+        over: false,
+        difference: '434.73',
+        bar: 9,
+      },
+      {
+        id: 'savings',
+        label: 'Savings & debt',
+        percent: 20,
+        target: '320.00',
+        planned: '0.00',
+        over: false,
+        difference: '320.00',
+        bar: 0,
+      },
+    ])
+  })
+
+  it('counts savings, debt and investments together as the last share', () => {
+    const lines = [
+      line('100.00', '0.00', { group: 'SAVINGS' }),
+      line('50.00', '0.00', { group: 'DEBT' }),
+      line('25.50', '0.00', { group: 'INVESTMENTS' }),
+    ]
+    expect(breakdown(split, '1600.00', lines)[2].planned).toBe('175.50')
+  })
+
+  it('rounds targets to the cent', () => {
+    const odd = { needsPct: 33, wantsPct: 33, savingsPct: 34 }
+    expect(breakdown(odd, '1000.01', []).map((b) => b.target)).toEqual([
+      '330.00',
+      '330.00',
+      '340.00',
+    ])
+  })
+
+  it('shows $0 targets with no expected income, so anything planned is over', () => {
+    const [needs, wants] = breakdown(split, '0.00', [line('300.00', '0.00', { group: 'NEEDS' })])
+    expect(needs).toMatchObject({ target: '0.00', over: true, difference: '300.00', bar: 100 })
+    expect(wants).toMatchObject({ target: '0.00', over: false, difference: '0.00', bar: 0 })
   })
 })

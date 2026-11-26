@@ -81,3 +81,46 @@ export function parseBudgetInput(
   }
   return { ok: true, amount: Number(cleaned).toFixed(2) }
 }
+
+// The split used when none has been saved yet
+export const DEFAULT_SPLIT = { needsPct: 50, wantsPct: 30, savingsPct: 20 }
+export type Split = typeof DEFAULT_SPLIT
+
+// Expected income not yet given to a budget; negative when more is budgeted
+// than expected
+export function unallocated(expected: string, lines: BudgetLine[]) {
+  return sumAmounts([expected, `-${totals(lines).budgeted}`])
+}
+
+export type Bucket = {
+  id: 'needs' | 'wants' | 'savings'
+  label: string
+  percent: number // the plan's share, e.g. 50
+  target: string // that share of expected income
+  planned: string // budgets set in the bucket's categories
+  over: boolean // more planned than the target
+  difference: string // how far over, or how much is still unallocated (positive)
+  bar: number // planned as a share of the target, capped at 100
+}
+
+// The 50/30/20 breakdown: each bucket's target from expected income, against
+// what's planned. With no expected income, every target is $0.
+export function breakdown(split: Split, expected: string, lines: BudgetLine[]): Bucket[] {
+  const shares = { needs: split.needsPct, wants: split.wantsPct, savings: split.savingsPct }
+  return (['needs', 'wants', 'savings'] as const).map((id) => {
+    const tab = PLAN_TABS.find((t) => t.id === id)!
+    const percent = shares[id]
+    const target = Math.round((cents(expected) * percent) / 100)
+    const planned = cents(totals(lines.filter((l) => tab.groups!.includes(l.group))).budgeted)
+    return {
+      id,
+      label: tab.label,
+      percent,
+      target: (target / 100).toFixed(2),
+      planned: (planned / 100).toFixed(2),
+      over: planned > target,
+      difference: (Math.abs(target - planned) / 100).toFixed(2),
+      bar: target > 0 ? Math.min(100, Math.round((planned / target) * 100)) : planned > 0 ? 100 : 0,
+    }
+  })
+}

@@ -4,13 +4,15 @@ import { Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useApiFetch } from '../lib/api'
 import { useToast } from '../lib/toast'
-import { totals } from '../lib/budgets'
+import { DEFAULT_SPLIT, totals, type Split } from '../lib/budgets'
 import { currentMonth, monthLabel, shiftMonth } from '../lib/dates'
-import type { BudgetMonth } from '../lib/types'
+import type { BudgetMonth, BudgetPlan as Plan } from '../lib/types'
 import PageHeader from '../components/PageHeader'
 import MonthSwitcher from '../components/transactions/MonthSwitcher'
 import BudgetHero from '../components/budgets/BudgetHero'
 import BudgetPlan from '../components/budgets/BudgetPlan'
+import BudgetBreakdown from '../components/budgets/BudgetBreakdown'
+import PlanFormModal from '../components/budgets/PlanFormModal'
 import { FormError } from '../components/form'
 
 // The chart library only downloads when Budgets is opened
@@ -37,6 +39,8 @@ function Budgets() {
     error?: string
   } | null>(null)
   const [history, setHistory] = useState<{ month: string; data: History } | null>(null)
+  const [planResult, setPlanResult] = useState<{ month: string; plan: Plan | null } | null>(null)
+  const [editingPlan, setEditingPlan] = useState(false)
 
   useEffect(() => {
     // If the month changes before this answer arrives, ignore it
@@ -60,9 +64,24 @@ function Budgets() {
     }
   }, [apiFetch, month])
 
+  // The split this month uses (carried from an earlier month if needed)
+  useEffect(() => {
+    let stale = false
+    apiFetch<{ plan: Plan | null }>(`/api/budgets/${month}/plan`)
+      .then(({ plan }) => !stale && setPlanResult({ month, plan }))
+      .catch(() => {}) // the breakdown is extra; the rest of the page still works
+    return () => {
+      stale = true
+    }
+  }, [apiFetch, month, version])
+
   const current = result?.month === month ? result : null
   const lines = current?.data?.categories
   const months = history?.month === month ? history.data.months : null
+  const planLoaded = planResult?.month === month
+  const plan = planLoaded ? planResult.plan : null
+  // 50/30/20 until a split has been saved
+  const split: Split = plan ?? DEFAULT_SPLIT
 
   // Sets, changes or (amount null) removes one category's budget
   async function saveBudget(categoryId: string, amount: string | null) {
@@ -75,6 +94,21 @@ function Budgets() {
       toast({ title: "Couldn't save that budget", message: (err as Error).message, tone: 'error' })
     }
     setVersion((v) => v + 1)
+  }
+
+  // Saves the split from this month on; returns the problem, if any
+  async function savePlan(values: Split) {
+    try {
+      await apiFetch(`/api/budgets/${month}/plan`, {
+        method: 'PUT',
+        body: JSON.stringify(values),
+      })
+    } catch (err) {
+      return (err as Error).message
+    }
+    toast({ title: `Split saved from ${monthLabel(month)} on` })
+    setVersion((v) => v + 1)
+    return null
   }
 
   // Fills in last month's budgets, keeping any already set this month
@@ -126,18 +160,36 @@ function Budgets() {
         <>
           {/* The month's budget beside the spending chart; stacked when narrow */}
           <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-5 max-[1000px]:grid-cols-1">
-            <BudgetHero lines={lines} />
+            <BudgetHero lines={lines} income={current.data!.income} />
             {months && (
               <Suspense fallback={null}>
                 <SpendingChart months={months} budget={totals(lines).budgeted} />
               </Suspense>
             )}
           </div>
+          {planLoaded && (
+            <BudgetBreakdown
+              split={split}
+              income={current.data!.income}
+              lines={lines}
+              onEdit={() => setEditingPlan(true)}
+            />
+          )}
           <BudgetPlan lines={lines} onSave={saveBudget} />
           <p className="sr-only" aria-live="polite">
             Budgets for {monthLabel(month)}
           </p>
         </>
+      )}
+
+      {editingPlan && (
+        <PlanFormModal
+          month={month}
+          split={split}
+          from={plan?.from ?? null}
+          onClose={() => setEditingPlan(false)}
+          onSubmit={savePlan}
+        />
       )}
     </div>
   )

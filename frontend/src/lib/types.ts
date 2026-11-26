@@ -62,12 +62,19 @@ export type BudgetLine = {
   spent: string
 }
 
-export type BudgetMonth = { month: string; categories: BudgetLine[] }
+// A month's income: expected (from pay schedules) and received (income
+// transactions), two separate figures
+export type MonthIncome = {
+  expected: string
+  received: string
+  paydays: { date: string; amount: string; source: string }[]
+}
 
-// Net pay and the 50/30/20 split a month uses (from the month it started)
+export type BudgetMonth = { month: string; categories: BudgetLine[]; income: MonthIncome }
+
+// The 50/30/20 split a month uses (from the month it started)
 export type BudgetPlan = {
   from: string // e.g. "2026-11"
-  netPay: string
   needsPct: number
   wantsPct: number
   savingsPct: number

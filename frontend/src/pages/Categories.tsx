@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Plus, Wallet } from 'lucide-react'
 import { useApiFetch } from '../lib/api'
 import type { Category, CategoryGroup, IncomeSource, PaySchedule } from '../lib/types'
@@ -110,7 +111,11 @@ function Categories() {
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [sources, setSources] = useState<IncomeSource[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [openTile, setOpenTile] = useState<TileId | null>(null)
+  // ?open=sources (e.g. from the Budgets page) opens the income sources popup
+  const [params] = useSearchParams()
+  const [openTile, setOpenTile] = useState<TileId | null>(
+    params.get('open') === 'sources' ? 'SOURCES' : null,
+  )
   const [showArchived, setShowArchived] = useState(false)
   const [popup, setPopup] = useState<Popup | null>(null)
   // Each income source's current pay, e.g. "$800.00 every 2 weeks", shown under its name
