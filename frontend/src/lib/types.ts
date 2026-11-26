@@ -50,3 +50,47 @@ export type Transaction = {
   category: { id: string; name: string; emoji: string | null; group: CategoryGroup } | null
   incomeSource: { id: string; name: string } | null
 }
+
+// One spending category on the Budgets page, for one month
+export type BudgetLine = {
+  id: string // the category's id
+  name: string
+  emoji: string | null
+  group: CategoryGroup
+  archived: boolean
+  budget: string | null // null when no budget is set
+  spent: string
+}
+
+// A month's income: expected (from pay schedules) and received (income
+// transactions), two separate figures
+export type MonthIncome = {
+  expected: string
+  received: string
+  paydays: { date: string; amount: string; source: string }[]
+}
+
+export type BudgetMonth = { month: string; categories: BudgetLine[]; income: MonthIncome }
+
+// The 50/30/20 split a month uses (from the month it started)
+export type BudgetPlan = {
+  from: string // e.g. "2026-11"
+  needsPct: number
+  wantsPct: number
+  savingsPct: number
+}
+
+// How often a pay schedule pays (see PayFrequency on the server)
+export type PayFrequency = 'WEEKS' | 'MONTHS' | 'TWICE_A_MONTH'
+
+// What an income source pays and when, from its first payday on
+export type PaySchedule = {
+  id: string
+  startsOn: string // first payday, "YYYY-MM-DD"
+  endsOn: string | null // last payday, if it has ended
+  amount: string // per paycheque
+  frequency: PayFrequency
+  interval: number | null // every N weeks or months
+  dayOne: number | null // twice a month only
+  dayTwo: number | null // twice a month only (31 = last day)
+}

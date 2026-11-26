@@ -1,0 +1,247 @@
+import { Router } from "express";
+import { z } from "zod";
+import { prisma } from "../db.js";
+import { requireUser } from "../middleware/requireUser.js";
+import { HttpError } from "../lib/httpError.js";
+import { moneySchema, parseBody } from "../lib/validation.js";
+import { lastMonths, monthRange, monthSchema, monthStart, previousMonth } from "../lib/months.js";
+import { paydaysIn } from "../lib/paydays.js";
+import { sumMoney } from "../lib/money.js";
+
+// Monthly budgets: a planned amount per spending category per month
+export const budgetsRouter = Router();
+budgetsRouter.use(requireUser);
+
+const amountSchema = z.strictObject({
+  amount: moneySchema.refine((value) => Number(value) > 0, "amount must be above zero"),
+});
+
+// A month in the URL, e.g. /api/budgets/2026-10
+function monthParam(value: unknown) {
+  return parseBody(monthSchema, value);
+}
+
+// One of the user's categories that can have a budget: spending, not archived.
+// Another user's category is "not found", so nobody can tell it exists.
+async function budgetableCategory(userId: string, categoryId: unknown) {
+  const id = z.uuid().safeParse(categoryId);
+  const category = id.success
+    ? await prisma.category.findFirst({ where: { id: id.data, userId } })
+    : null;
+  if (!category) throw new HttpError(404, "Category not found");
+  if (category.group === "INCOME") {
+    throw new HttpError(400, "Budgets are for spending categories, not income");
+  }
+  if (category.archivedAt) {
+    throw new HttpError(409, "Restore this category to give it a budget");
+  }
+  return category;
+}
+
+// The month's income, as two separate figures that never change each other:
+// expected (the paydays in the user's pay schedules) and received (income
+// transactions actually recorded)
+async function incomeFor(userId: string, month: string) {
+  const [schedules, received] = await Promise.all([
+    prisma.paySchedule.findMany({
+      where: { userId },
+      include: { incomeSource: { select: { name: true } } },
+    }),
+    prisma.transaction.aggregate({
+      where: { userId, type: "INCOME", date: monthRange(month) },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  // Each source's schedules decide its paydays together (a later one takes over)
+  const bySource = Map.groupBy(schedules, (s) => s.incomeSourceId);
+  const paydays = [...bySource.values()]
+    .flatMap((group) =>
+      paydaysIn(
+        group.map((s) => ({ ...s, amount: s.amount.toFixed(2) })),
+        month,
+      ).map((p) => ({ ...p, source: group[0].incomeSource.name })),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date) || a.source.localeCompare(b.source));
+
+  return {
+    expected: sumMoney(paydays.map((p) => p.amount)),
+    received: received._sum.amount?.toFixed(2) ?? "0.00",
+    paydays,
+  };
+}
+
+// Every spending category for a month, with its budget (or null) and what was
+// spent. Archived categories only appear if they have a budget or spending.
+// Also the month's expected and received income.
+budgetsRouter.get("/:month", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const userId = req.user!.id;
+
+  const [categories, budgets, spending, income] = await Promise.all([
+    prisma.category.findMany({
+      where: { userId, group: { not: "INCOME" } },
+      orderBy: { name: "asc" },
+    }),
+    prisma.budget.findMany({ where: { userId, month: monthStart(month) } }),
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: { userId, type: "EXPENSE", date: monthRange(month) },
+      _sum: { amount: true },
+    }),
+    incomeFor(userId, month),
+  ]);
+
+  const budgetOf = new Map(budgets.map((b) => [b.categoryId, b.amount]));
+  const spentOf = new Map(spending.map((s) => [s.categoryId, s._sum.amount]));
+
+  res.json({
+    month,
+    categories: categories
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        emoji: c.emoji,
+        group: c.group,
+        archived: c.archivedAt !== null,
+        budget: budgetOf.get(c.id)?.toFixed(2) ?? null,
+        spent: spentOf.get(c.id)?.toFixed(2) ?? "0.00",
+      }))
+      .filter((c) => !c.archived || c.budget !== null || c.spent !== "0.00"),
+    income,
+  });
+});
+
+// Total spending for each of the 6 months up to and including this one, for
+// the spending chart. Only expenses count (not income or adjustments).
+budgetsRouter.get("/:month/history", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const userId = req.user!.id;
+
+  const months = await Promise.all(
+    lastMonths(month, 6).map(async (m) => {
+      const { _sum } = await prisma.transaction.aggregate({
+        where: { userId, type: "EXPENSE", date: monthRange(m) },
+        _sum: { amount: true },
+      });
+      return { month: m, spent: _sum.amount?.toFixed(2) ?? "0.00" };
+    }),
+  );
+
+  res.json({ months });
+});
+
+// ---------- Budget plan: the 50/30/20 split of expected income ----------
+// Registered before the /:month/:categoryId routes, so "plan" isn't taken as
+// a category id.
+
+const percent = z
+  .number()
+  .int("percentages must be whole numbers")
+  .min(0, "percentages can't be below 0")
+  .max(100, "percentages can't be above 100");
+
+const planSchema = z
+  .strictObject({
+    needsPct: percent,
+    wantsPct: percent,
+    savingsPct: percent,
+  })
+  .refine(
+    (p) => p.needsPct + p.wantsPct + p.savingsPct === 100,
+    "Needs, wants and savings must add up to 100%",
+  );
+
+function planJson(plan: { month: Date; needsPct: number; wantsPct: number; savingsPct: number }) {
+  return {
+    from: plan.month.toISOString().slice(0, 7), // the month it started
+    needsPct: plan.needsPct,
+    wantsPct: plan.wantsPct,
+    savingsPct: plan.savingsPct,
+  };
+}
+
+// The plan a month uses: the latest one starting that month or earlier
+budgetsRouter.get("/:month/plan", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const plan = await prisma.budgetPlan.findFirst({
+    where: { userId: req.user!.id, month: { lte: monthStart(month) } },
+    orderBy: { month: "desc" },
+  });
+  res.json({ plan: plan ? planJson(plan) : null });
+});
+
+// Saves the plan from this month on. Earlier months keep their own plan.
+budgetsRouter.put("/:month/plan", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const values = parseBody(planSchema, req.body);
+  const userId = req.user!.id;
+
+  const plan = await prisma.budgetPlan.upsert({
+    where: { userId_month: { userId, month: monthStart(month) } },
+    create: { userId, month: monthStart(month), ...values },
+    update: values,
+  });
+  res.json({ plan: planJson(plan) });
+});
+
+// Sets (or changes) one category's budget for a month
+budgetsRouter.put("/:month/:categoryId", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const { amount } = parseBody(amountSchema, req.body);
+  const userId = req.user!.id;
+  const category = await budgetableCategory(userId, req.params.categoryId);
+
+  const budget = await prisma.budget.upsert({
+    where: {
+      userId_categoryId_month: { userId, categoryId: category.id, month: monthStart(month) },
+    },
+    create: { userId, categoryId: category.id, month: monthStart(month), amount },
+    update: { amount },
+  });
+
+  res.json({ categoryId: category.id, month, amount: budget.amount.toFixed(2) });
+});
+
+// Removes one category's budget for a month (fine if there wasn't one)
+budgetsRouter.delete("/:month/:categoryId", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const userId = req.user!.id;
+  const id = z.uuid().safeParse(req.params.categoryId);
+  const category = id.success
+    ? await prisma.category.findFirst({ where: { id: id.data, userId } })
+    : null;
+  if (!category) throw new HttpError(404, "Category not found");
+
+  await prisma.budget.deleteMany({
+    where: { userId, categoryId: category.id, month: monthStart(month) },
+  });
+  res.status(204).end();
+});
+
+// Copies last month's budgets into this month. Categories that already have a
+// budget this month keep it, and archived categories are left out.
+budgetsRouter.post("/:month/copy-previous", async (req, res) => {
+  const month = monthParam(req.params.month);
+  const userId = req.user!.id;
+
+  const previous = await prisma.budget.findMany({
+    where: {
+      userId,
+      month: monthStart(previousMonth(month)),
+      category: { archivedAt: null, group: { not: "INCOME" } },
+    },
+  });
+
+  const { count } = await prisma.budget.createMany({
+    data: previous.map((b) => ({
+      userId,
+      categoryId: b.categoryId,
+      month: monthStart(month),
+      amount: b.amount,
+    })),
+    skipDuplicates: true, // keep budgets already set this month
+  });
+
+  res.json({ copied: count });
+});

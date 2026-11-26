@@ -11,7 +11,7 @@ afterAll(() => prisma.$disconnect());
 // routes (e.g. accounts in M3), add them here so they're checked too.
 // `:category` / `:source` are swapped for real IDs owned by Alice, so a
 // passing test proves the request was blocked by sign-in, not a missing ID.
-const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] = [
+const PROTECTED: [method: "get" | "post" | "put" | "patch" | "delete", path: string][] = [
   ["get", "/api/me"],
   ["get", "/api/categories"],
   ["post", "/api/categories"],
@@ -21,6 +21,10 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/income-sources"],
   ["patch", "/api/income-sources/:source"],
   ["delete", "/api/income-sources/:source"],
+  ["get", "/api/income-sources/:source/schedules"],
+  ["post", "/api/income-sources/:source/schedules"],
+  ["patch", "/api/income-sources/:source/schedules/:schedule"],
+  ["delete", "/api/income-sources/:source/schedules/:schedule"],
   ["get", "/api/accounts"],
   ["post", "/api/accounts"],
   ["patch", "/api/accounts/:account"],
@@ -32,6 +36,13 @@ const PROTECTED: [method: "get" | "post" | "patch" | "delete", path: string][] =
   ["post", "/api/transactions/bulk-delete"],
   ["patch", "/api/transactions/:transaction"],
   ["delete", "/api/transactions/:transaction"],
+  ["get", "/api/budgets/2026-10"],
+  ["get", "/api/budgets/2026-10/history"],
+  ["get", "/api/budgets/2026-10/plan"],
+  ["put", "/api/budgets/2026-10/plan"],
+  ["put", "/api/budgets/2026-10/:category"],
+  ["delete", "/api/budgets/2026-10/:category"],
+  ["post", "/api/budgets/2026-10/copy-previous"],
 ];
 
 describe("sign-in protection", () => {
@@ -52,10 +63,32 @@ describe("sign-in protection", () => {
         categoryId: category.body.id,
       },
     });
+    await prisma.budget.create({
+      data: {
+        month: new Date("2026-10-01"),
+        amount: "100.00",
+        userId: user.id,
+        categoryId: category.body.id,
+      },
+    });
+    const schedule = await prisma.paySchedule.create({
+      data: {
+        startsOn: new Date("2026-10-02"),
+        amount: "800.00",
+        frequency: "WEEKS",
+        interval: 2,
+        incomeSourceId: source.body.id,
+        userId: user.id,
+      },
+    });
+    await prisma.budgetPlan.create({
+      data: { month: new Date("2026-10-01"), userId: user.id },
+    });
     const before = await snapshot();
 
     const url = path
       .replace(":category", category.body.id)
+      .replace(":schedule", schedule.id)
       .replace(":source", source.body.id)
       .replace(":account", account.id)
       .replace(":transaction", transaction.id);
@@ -72,12 +105,16 @@ describe("sign-in protection", () => {
 
 // Everything in the tables we care about, to compare before/after
 async function snapshot() {
-  const [users, categories, sources, accounts, transactions] = await Promise.all([
-    prisma.user.findMany({ orderBy: { id: "asc" } }),
-    prisma.category.findMany({ orderBy: { id: "asc" } }),
-    prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
-    prisma.account.findMany({ orderBy: { id: "asc" } }),
-    prisma.transaction.findMany({ orderBy: { id: "asc" } }),
-  ]);
-  return { users, categories, sources, accounts, transactions };
+  const [users, categories, sources, accounts, transactions, budgets, plans, schedules] =
+    await Promise.all([
+      prisma.user.findMany({ orderBy: { id: "asc" } }),
+      prisma.category.findMany({ orderBy: { id: "asc" } }),
+      prisma.incomeSource.findMany({ orderBy: { id: "asc" } }),
+      prisma.account.findMany({ orderBy: { id: "asc" } }),
+      prisma.transaction.findMany({ orderBy: { id: "asc" } }),
+      prisma.budget.findMany({ orderBy: { id: "asc" } }),
+      prisma.budgetPlan.findMany({ orderBy: { id: "asc" } }),
+      prisma.paySchedule.findMany({ orderBy: { id: "asc" } }),
+    ]);
+  return { users, categories, sources, accounts, transactions, budgets, plans, schedules };
 }

@@ -4,6 +4,9 @@ import { prisma } from "../db.js";
 
 // Empties every table in luma_test (children before parents)
 export async function resetDb() {
+  await prisma.budget.deleteMany();
+  await prisma.budgetPlan.deleteMany();
+  await prisma.paySchedule.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.account.deleteMany();
   await prisma.category.deleteMany();
@@ -32,6 +35,7 @@ export function as(clerkUserId: string) {
     get: (url: string) => auth(request(app).get(url)),
     post: (url: string, body?: object) => auth(request(app).post(url)).send(body),
     patch: (url: string, body?: object) => auth(request(app).patch(url)).send(body),
+    put: (url: string, body?: object) => auth(request(app).put(url)).send(body),
     delete: (url: string) => auth(request(app).delete(url)),
   };
 }

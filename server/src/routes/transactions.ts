@@ -11,6 +11,7 @@ import { prisma } from "../db.js";
 import { requireUser } from "../middleware/requireUser.js";
 import { HttpError } from "../lib/httpError.js";
 import { dateSchema, moneySchema, parseBody } from "../lib/validation.js";
+import { monthRange, monthSchema } from "../lib/months.js";
 
 // Income and expenses. Transfers arrive in M5.
 export const transactionsRouter = Router();
@@ -38,10 +39,7 @@ const listSchema = z
       .min(1, "Limit must be at least 1")
       .max(50, "Limit cannot exceed 50")
       .optional(),
-    month: z
-      .string()
-      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must look like 2026-10")
-      .optional(),
+    month: monthSchema.optional(),
     accountId: z.uuid().optional(),
     categoryId: z.uuid().optional(),
     // A date range (both days included), across months. Used instead of month.
@@ -70,15 +68,6 @@ function toJson(t: TransactionWithRelated) {
     account: t.account,
     category: t.category,
     incomeSource: t.incomeSource,
-  };
-}
-
-// The first day of a month, and of the month after: "2026-12" → Dec 1, Jan 1
-function monthRange(month: string) {
-  const [year, monthNumber] = month.split("-").map(Number);
-  return {
-    gte: new Date(Date.UTC(year, monthNumber - 1, 1)),
-    lt: new Date(Date.UTC(year, monthNumber, 1)),
   };
 }
 

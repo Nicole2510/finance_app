@@ -7,6 +7,8 @@ import { incomeSourcesRouter } from "./routes/incomeSources.js";
 import { accountsRouter } from "./routes/accounts.js";
 import { transactionsRouter } from "./routes/transactions.js";
 import { importRouter } from "./routes/transactionImport.js";
+import { budgetsRouter } from "./routes/budgets.js";
+import { paySchedulesRouter } from "./routes/paySchedules.js";
 
 // Creates express app (kept separate from app.listen so tests can use it)
 export const app = express();
@@ -27,11 +29,13 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/me", meRouter);
 app.use("/api/categories", categoriesRouter);
+app.use("/api/income-sources/:sourceId/schedules", paySchedulesRouter);
 app.use("/api/income-sources", incomeSourcesRouter);
 app.use("/api/accounts", accountsRouter);
 // Before the transactions router, so /import isn't treated as a transaction id
 app.use("/api/transactions/import", importRouter);
 app.use("/api/transactions", transactionsRouter);
+app.use("/api/budgets", budgetsRouter);
 
 // Catch any error thrown in a route and send a safe response
 // (must be registered after all routes)
