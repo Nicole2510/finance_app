@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useClerk, useUser } from '@clerk/react'
-import { LogOut, UserCog } from 'lucide-react'
+import { LogOut, Trash2, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PageHeader from '../components/PageHeader'
+import DeleteAccountModal from '../components/DeleteAccountModal'
 
 // A white card with a title and a short line under it
 function Card({
@@ -35,10 +36,12 @@ function Field({ label, value }: { label: string; value: string }) {
   )
 }
 
-// Settings: your profile (shown from Clerk, edited in Clerk's own popup) and sign out
+// Settings: your profile (shown from Clerk, edited in Clerk's own popup), sign
+// out, and deleting the account
 function Settings() {
   const { user } = useUser()
   const { openUserProfile, signOut } = useClerk()
+  const [deleting, setDeleting] = useState(false)
 
   if (!user) return <p>Loading...</p>
 
@@ -83,7 +86,18 @@ function Settings() {
             </Button>
           </div>
         </Card>
+
+        <Card
+          title="Delete account"
+          description="Permanently delete your account and all your data."
+        >
+          <Button variant="destructive" onClick={() => setDeleting(true)}>
+            <Trash2 /> Delete account
+          </Button>
+        </Card>
       </div>
+
+      {deleting && <DeleteAccountModal onClose={() => setDeleting(false)} />}
     </div>
   )
 }
